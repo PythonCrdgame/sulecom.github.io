@@ -1,13 +1,22 @@
 body {
     background-color: #5628ac;
     margin: 1cm;
-    color:black
+    color: black;
+    /* Use Noto Serif JP as the site's default serif font */
+    font-family: 'Noto Serif JP', serif;
+    font-weight: 400;
 }
 
-
 .noto-serif-jp-body {
-  font-family: "Noto Serif JP", serif;
+  font-family: 'Noto Serif JP', serif;
   font-optical-sizing: auto;
-  font-weight: <150>;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.noto-sans-jp-body {
+  font-family: "Noto Sans JP", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 100;
   font-style: normal;
 }
