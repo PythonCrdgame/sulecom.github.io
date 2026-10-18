@@ -4,9 +4,10 @@ body {
     color:black
 }
 
-.noto-sans-jp-body {
-  font-family: "Noto Sans JP", sans-serif;
+
+.noto-serif-jp-body {
+  font-family: "Noto Serif JP", serif;
   font-optical-sizing: auto;
-  font-weight: 100;
+  font-weight: <150>;
   font-style: normal;
 }
