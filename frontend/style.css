@@ -10,7 +10,8 @@ body {
 }
 
 .landing-page,
-.auth-body {
+.auth-body,
+.home-body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -37,7 +38,8 @@ body {
 .topbar nav a,
 .primary-btn,
 .secondary-btn,
-.switch-link a {
+.switch-link a,
+.home-nav a {
     color: #f5d7a1;
     text-decoration: none;
     font-weight: 700;
@@ -108,7 +110,9 @@ button:hover {
 
 .account-panel,
 .user-section,
-.auth-card {
+.auth-card,
+.profile-card,
+.listing-panel {
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 18px;
@@ -130,6 +134,101 @@ button:hover {
     width: calc(100% - 4rem);
     margin: 0 auto 3rem;
     padding: 1.5rem 2rem;
+}
+
+.home-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 3rem;
+    background: rgba(0, 0, 0, 0.12);
+}
+
+.home-header h1 {
+    margin: 0.25rem 0 0;
+}
+
+.home-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logout-btn {
+    background: transparent;
+    border: 1px solid #f5d7a1;
+    color: #f5d7a1;
+}
+
+.home-main {
+    max-width: 1100px;
+    width: calc(100% - 4rem);
+    margin: 2rem auto 3rem;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 2rem;
+}
+
+.profile-card {
+    padding: 1.5rem;
+}
+
+.profile-card h2 {
+    margin-top: 0;
+}
+
+.listing-panel {
+    padding: 1.5rem;
+}
+
+.search-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.search-row input {
+    flex: 1;
+}
+
+.listing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.listing-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 1rem;
+}
+
+.tag {
+    display: inline-block;
+    padding: 0.3rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}
+
+.sell-tag {
+    background: rgba(255, 209, 102, 0.2);
+    color: #ffd166;
+}
+
+.buy-tag {
+    background: rgba(120, 255, 170, 0.15);
+    color: #9af7b8;
+}
+
+.listing-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    color: #f7f1e7;
 }
 
 .auth-body {
@@ -220,18 +319,22 @@ button {
 
 @media (max-width: 768px) {
     .topbar,
-    .hero {
+    .hero,
+    .home-header,
+    .home-main {
         padding-left: 1.25rem;
         padding-right: 1.25rem;
     }
 
-    .topbar {
+    .topbar,
+    .home-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.75rem;
     }
 
-    .hero {
+    .hero,
+    .home-main {
         grid-template-columns: 1fr;
     }
 

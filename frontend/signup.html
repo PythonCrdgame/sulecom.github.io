@@ -68,6 +68,8 @@
 
                 if (response.ok) {
                     signupForm.reset();
+                    localStorage.setItem('sulecomUser', JSON.stringify(result.user));
+                    window.location.href = 'home.html';
                 }
             } catch (error) {
                 signupMessage.textContent = 'Something went wrong. Please try again.';

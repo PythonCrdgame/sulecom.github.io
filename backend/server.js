@@ -88,6 +88,14 @@ app.get("/signin", (req, res) => {
   res.sendFile(path.join(frontendDir, "signin.html"));
 });
 
+app.get("/home", (req, res) => {
+  res.sendFile(path.join(frontendDir, "home.html"));
+});
+
+app.get("/home.html", (req, res) => {
+  res.sendFile(path.join(frontendDir, "home.html"));
+});
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(frontendDir, "index.html"));
 });

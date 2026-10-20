@@ -4,14 +4,89 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
-    <!-- Load Noto Serif JP from Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@100;300;400;700&display=swap" rel="stylesheet">
-    <script src="/server.js" defer></script>
-    <title>SulE-Com!</title>
+    <title>Home | SulE-Com</title>
 </head>
-<body class="noto-serif-jp-body">
-    <h1>Home!</h1>
-    <p>Search for a specific item or just look around</p>
-  
+<body class="home-body">
+    <header class="home-header">
+        <div>
+            <p class="eyebrow">SulE-Com</p>
+            <h1>Marketplace home</h1>
+        </div>
+        <nav class="home-nav">
+            <a href="index.html">Home</a>
+            <button id="logoutBtn" class="logout-btn" type="button">Log out</button>
+        </nav>
+    </header>
+
+    <main class="home-main">
+        <aside class="profile-card">
+            <h2>Welcome</h2>
+            <p id="welcomeName">Loading user...</p>
+            <p id="accountType">Account type: --</p>
+            <p id="userEmail">Email: --</p>
+        </aside>
+
+        <section class="listing-panel">
+            <div class="search-row">
+                <input id="searchInput" type="text" placeholder="Search items or sellers">
+                <button type="button">Search</button>
+            </div>
+
+            <div class="listing-grid">
+                <article class="listing-card">
+                    <span class="tag sell-tag">Sell</span>
+                    <h3>Vintage Lamp</h3>
+                    <p>Beautiful antique lamp in excellent condition.</p>
+                    <div class="listing-meta">
+                        <strong>$48</strong>
+                        <span>Seller: Mira</span>
+                    </div>
+                </article>
+
+                <article class="listing-card">
+                    <span class="tag buy-tag">Buy</span>
+                    <h3>Used Bicycle</h3>
+                    <p>Good commuter bike with new tires and chain.</p>
+                    <div class="listing-meta">
+                        <strong>$120</strong>
+                        <span>Seller: Noah</span>
+                    </div>
+                </article>
+
+                <article class="listing-card">
+                    <span class="tag sell-tag">Sell</span>
+                    <h3>Gaming Headset</h3>
+                    <p>Wireless headset with noise canceling and mic.</p>
+                    <div class="listing-meta">
+                        <strong>$65</strong>
+                        <span>Seller: Ava</span>
+                    </div>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const welcomeName = document.getElementById('welcomeName');
+        const accountType = document.getElementById('accountType');
+        const userEmail = document.getElementById('userEmail');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        const storedUser = localStorage.getItem('sulecomUser');
+        if (!storedUser) {
+            window.location.href = 'signin.html';
+        } else {
+            const user = JSON.parse(storedUser);
+            welcomeName.textContent = user.name || 'User';
+            accountType.textContent = `Account type: ${user.accountType === 'buyer' ? 'Buy Only' : 'Buy & Sell'}`;
+            userEmail.textContent = `Email: ${user.email || 'N/A'}`;
+        }
+
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('sulecomUser');
+            window.location.href = 'signin.html';
+        });
+    </script>
 </body>
 </html>

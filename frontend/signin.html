@@ -51,6 +51,8 @@
 
                 if (response.ok) {
                     signinForm.reset();
+                    localStorage.setItem('sulecomUser', JSON.stringify(result.user));
+                    window.location.href = 'home.html';
                 }
             } catch (error) {
                 signinMessage.textContent = 'Unable to sign in right now.';
