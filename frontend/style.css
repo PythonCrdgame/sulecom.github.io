@@ -1,29 +1,241 @@
 body {
-    background-color: #003566;
-    margin: 1cm;
-    color: #bc6c25;
-    /* Use Noto Serif JP as the site's default serif font */
+    margin: 0;
+    background: linear-gradient(135deg, #003566 0%, #004b8d 100%);
+    color: #f4efe9;
     font-family: 'Noto Serif JP', serif;
-    font-weight: 400;
 }
 
-.noto-serif-jp-body {
-  font-family: 'Noto Serif JP', serif;
-  font-optical-sizing: auto;
-  font-weight: 400;
-  font-style: normal;
+* {
+    box-sizing: border-box;
 }
 
-.noto-sans-jp-body {
-  font-family: "Noto Sans JP", sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 100;
-  font-style: normal;
+.landing-page,
+.auth-body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
-.sign {
-  text-align: center;
-  .bordrad {
-  border-radius: 500px;
-  }
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem 4rem;
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.topbar h1 {
+    margin: 0;
+    font-size: 2rem;
+}
+
+.topbar nav {
+    display: flex;
+    gap: 1rem;
+}
+
+.topbar nav a,
+.primary-btn,
+.secondary-btn,
+.switch-link a {
+    color: #f5d7a1;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.hero {
+    display: grid;
+    grid-template-columns: 1.5fr 0.9fr;
+    gap: 2rem;
+    align-items: center;
+    padding: 4rem;
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.hero-copy h2 {
+    font-size: clamp(2.2rem, 4vw, 4rem);
+    margin: 0 0 1rem;
+    color: #fff3d6;
+}
+
+.eyebrow {
+    color: #ffd166;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.cta-row {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.primary-btn,
+.secondary-btn,
+button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem 1.2rem;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.2s ease;
+}
+
+.primary-btn,
+button {
+    background: #ffd166;
+    color: #003566;
+}
+
+.secondary-btn {
+    background: transparent;
+    border: 1px solid #f5d7a1;
+}
+
+.primary-btn:hover,
+.secondary-btn:hover,
+button:hover {
+    transform: translateY(-1px);
+}
+
+.account-panel,
+.user-section,
+.auth-card {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 18px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+}
+
+.account-panel {
+    padding: 2rem;
+}
+
+.account-panel ul,
+.user-list {
+    margin: 1rem 0 0;
+    padding-left: 1.25rem;
+}
+
+.user-section {
+    max-width: 1100px;
+    width: calc(100% - 4rem);
+    margin: 0 auto 3rem;
+    padding: 1.5rem 2rem;
+}
+
+.auth-body {
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.auth-card {
+    width: min(100%, 560px);
+    padding: 2rem;
+}
+
+.auth-card h1 {
+    margin-top: 0;
+    font-size: clamp(2rem, 3vw, 2.6rem);
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+label {
+    font-weight: 700;
+}
+
+input {
+    width: 100%;
+    padding: 0.8rem 0.9rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font: inherit;
+}
+
+input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.account-type-group {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.radio-option input {
+    width: auto;
+    margin: 0;
+}
+
+button {
+    margin-top: 1rem;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.message {
+    min-height: 1.5rem;
+    margin-top: 1rem;
+    font-weight: 700;
+}
+
+.success {
+    color: #b9fbc0;
+}
+
+.error {
+    color: #ffb4b4;
+}
+
+.switch-link {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+    .topbar,
+    .hero {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+    }
+
+    .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .hero {
+        grid-template-columns: 1fr;
+    }
+
+    .user-section {
+        width: calc(100% - 2rem);
+    }
 }

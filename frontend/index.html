@@ -4,16 +4,69 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
-    <!-- Load Noto Serif JP from Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@100;300;400;700&display=swap" rel="stylesheet">
-    <script src="/server.js" defer></script>
     <title>SulE-Com!</title>
 </head>
-<body class="noto-serif-jp-body">
-    <h1>Welcome to SulE-Com!</h1>
-    <p>This is a website to buy or sell items you and others will sell!</p>
-    <h2>Sign up to get started!</h2>
-    <a href="signup.html" target="_blank">Sign Up</a>
-    <a href="signin.html" target="_blank">Sign In</a>
+<body class="landing-page">
+    <header class="topbar">
+        <h1>SulE-Com</h1>
+        <nav>
+            <a href="signup.html">Sign Up</a>
+            <a href="signin.html">Sign In</a>
+        </nav>
+    </header>
+
+    <main class="hero">
+        <section class="hero-copy">
+            <p class="eyebrow">Community marketplace</p>
+            <h2>Buy and sell with trusted local users.</h2>
+            <p>This is a website to buy or sell items you and others will sell.</p>
+            <div class="cta-row">
+                <a class="primary-btn" href="signup.html">Create an account</a>
+                <a class="secondary-btn" href="signin.html">Log in</a>
+            </div>
+        </section>
+
+        <aside class="account-panel">
+            <h3>Account types</h3>
+            <ul>
+                <li>Buy & Sell</li>
+                <li>Buy Only</li>
+            </ul>
+        </aside>
+    </main>
+
+    <section class="user-section">
+        <h3>Current beta users</h3>
+        <ul id="user-list" class="user-list">
+            <li>Loading accounts...</li>
+        </ul>
+    </section>
+
+    <script>
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/users');
+                const users = await response.json();
+                const list = document.getElementById('user-list');
+
+                if (!users.length) {
+                    list.innerHTML = '<li>No users yet. Be the first to sign up.</li>';
+                    return;
+                }
+
+                list.innerHTML = users
+                    .map((user) => {
+                        const accountLabel = user.accountType === 'buyer' ? 'Buy Only' : 'Buy & Sell';
+                        return `<li><strong>${user.name}</strong> — ${user.email} — ${accountLabel}</li>`;
+                    })
+                    .join('');
+            } catch (error) {
+                document.getElementById('user-list').innerHTML = '<li>Unable to load accounts right now.</li>';
+            }
+        }
+
+        loadUsers();
+    </script>
 </body>
 </html>

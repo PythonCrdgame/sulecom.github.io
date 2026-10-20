@@ -4,19 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
-    <link rel="page" href="index.html">
-    <script src="/server.js" defer></script>
-    <title>Sign-In!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@100;300;400;700&display=swap" rel="stylesheet">
+    <title>Sign-In | SulE-Com</title>
 </head>
-<body class="sign">
-    <h1>Welcome to sign-in page!</h1>
-    <h2>Sign in to your account!</h2>
-    <form>
-      <label for="email">Email:</label><br>
-      <input type="email" id="email" class="bordrad" name="email"><br>
-      <label for="pass">SulE-Com password:</label><br>
-      <input type="password" id="pass" class="bordrad" name="pass"><br>
-      <input type="submit">
-    </form>
+<body class="auth-body">
+    <main class="auth-card">
+        <h1>Welcome back</h1>
+        <p>Sign in to continue to SulE-Com.</p>
+
+        <form id="signinForm">
+            <label for="signin-email">Email</label>
+            <input type="email" id="signin-email" name="email" placeholder="you@example.com" required>
+
+            <label for="signin-password">Password</label>
+            <input type="password" id="signin-password" name="password" placeholder="Enter your password" required>
+
+            <button type="submit">Sign in</button>
+        </form>
+
+        <p id="signinMessage" class="message"></p>
+        <p class="switch-link">Need an account? <a href="signup.html">Create one</a></p>
+    </main>
+
+    <script>
+        const signinForm = document.getElementById('signinForm');
+        const signinMessage = document.getElementById('signinMessage');
+
+        signinForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const payload = {
+                email: signinForm.email.value,
+                password: signinForm.password.value,
+            };
+
+            try {
+                const response = await fetch('/api/signin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                const result = await response.json();
+                signinMessage.textContent = result.message || 'Login processed.';
+                signinMessage.classList.add(response.ok ? 'success' : 'error');
+                signinMessage.classList.remove(response.ok ? 'error' : 'success');
+
+                if (response.ok) {
+                    signinForm.reset();
+                }
+            } catch (error) {
+                signinMessage.textContent = 'Unable to sign in right now.';
+                signinMessage.classList.add('error');
+            }
+        });
+    </script>
 </body>
 </html>
