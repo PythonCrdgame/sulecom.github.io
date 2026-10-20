@@ -1,13 +1,14 @@
 {
   "name": "sulecom-backend",
   "version": "1.0.0",
-  "description": "Beta backend for SulE-Com user accounts and listings",
+  "description": "SulE-Com marketplace backend with SQLite-backed accounts and listings",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "sqlite3": "^5.1.7"
   }
 }

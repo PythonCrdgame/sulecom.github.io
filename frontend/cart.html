@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SulE-Com | Cart</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="checkout-page">
+  <header class="seller-header">
+    <div class="brand-mark">SulE-Com</div>
+    <nav class="seller-nav">
+      <a href="home.html">Store</a>
+      <a href="seller.html">Sell</a>
+      <a href="checkout.html">Checkout</a>
+    </nav>
+  </header>
+
+  <main class="checkout-shell">
+    <section class="cart-panel">
+      <div class="panel-header">
+        <div>
+          <p class="mini-label">Your cart</p>
+          <h1>Ready to checkout</h1>
+        </div>
+        <a href="home.html" class="secondary-link">Continue shopping</a>
+      </div>
+
+      <div id="cartItems" class="cart-list"></div>
+    </section>
+
+    <aside class="summary-panel">
+      <h2>Order summary</h2>
+      <div id="summaryRow" class="summary-row"><span>Items</span><strong id="summaryItems">0</strong></div>
+      <div class="summary-row"><span>Subtotal</span><strong id="summarySubtotal">$0.00</strong></div>
+      <div class="summary-row"><span>Shipping</span><strong>Free</strong></div>
+      <div class="summary-row total"><span>Total</span><strong id="summaryTotal">$0.00</strong></div>
+      <a href="checkout.html" class="primary-btn full-width">Proceed to checkout</a>
+    </aside>
+  </main>
+
+  <script>
+    const cartItems = document.getElementById('cartItems');
+    const summaryItems = document.getElementById('summaryItems');
+    const summarySubtotal = document.getElementById('summarySubtotal');
+    const summaryTotal = document.getElementById('summaryTotal');
+
+    const renderCart = () => {
+      const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
+
+      if (!cart.length) {
+        cartItems.innerHTML = '<div class="empty-state">Your cart is empty. Add items from the marketplace.</div>';
+        summaryItems.textContent = '0';
+        summarySubtotal.textContent = '$0.00';
+        summaryTotal.textContent = '$0.00';
+        return;
+      }
+
+      cartItems.innerHTML = cart.map((item, index) => `
+        <div class="cart-item">
+          <div>
+            <h3>${item.name}</h3>
+            <p>Qty: 1</p>
+          </div>
+          <div class="item-cost">
+            <strong>$${Number(item.price).toFixed(2)}</strong>
+            <button type="button" class="remove-item-btn" data-index="${index}">Remove</button>
+          </div>
+        </div>
+      `).join('');
+
+      summaryItems.textContent = String(cart.length);
+      const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0), 0);
+      summarySubtotal.textContent = `$${subtotal.toFixed(2)}`;
+      summaryTotal.textContent = `$${subtotal.toFixed(2)}`;
+
+      document.querySelectorAll('.remove-item-btn').forEach((button) => {
+        button.addEventListener('click', () => {
+          const index = Number(button.dataset.index);
+          const updated = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
+          updated.splice(index, 1);
+          localStorage.setItem('sulecomCart', JSON.stringify(updated));
+          renderCart();
+        });
+      });
+    };
+
+    renderCart();
+  </script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SulE-Com | Checkout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="checkout-page">
+  <header class="seller-header">
+    <div class="brand-mark">SulE-Com</div>
+    <nav class="seller-nav">
+      <a href="home.html">Store</a>
+      <a href="cart.html">Cart</a>
+      <a href="seller.html">Sell</a>
+    </nav>
+  </header>
+
+  <main class="checkout-shell">
+    <section class="checkout-panel">
+      <div class="panel-header">
+        <div>
+          <p class="mini-label">Secure checkout</p>
+          <h1>Complete your order</h1>
+        </div>
+      </div>
+
+      <form id="checkoutForm" class="checkout-form">
+        <div class="field-row">
+          <label for="fullName">Full name</label>
+          <input type="text" id="fullName" name="fullName" placeholder="Jane Doe" required />
+        </div>
+        <div class="field-row">
+          <label for="address">Shipping address</label>
+          <input type="text" id="address" name="address" placeholder="123 Main Street" required />
+        </div>
+        <div class="field-row">
+          <label for="cardNumber">Card number</label>
+          <input type="text" id="cardNumber" name="cardNumber" placeholder="4242 4242 4242 4242" required />
+        </div>
+        <button type="submit" class="auth-btn primary">Place order</button>
+      </form>
+
+      <p id="checkoutMessage" class="auth-message"></p>
+    </section>
+
+    <aside class="summary-panel">
+      <h2>Order summary</h2>
+      <div class="summary-row"><span>Items</span><strong id="checkoutCount">0</strong></div>
+      <div class="summary-row"><span>Subtotal</span><strong id="checkoutSubtotal">$0.00</strong></div>
+      <div class="summary-row"><span>Shipping</span><strong>Free</strong></div>
+      <div class="summary-row total"><span>Total</span><strong id="checkoutTotal">$0.00</strong></div>
+    </aside>
+  </main>
+
+  <script>
+    const checkoutForm = document.getElementById('checkoutForm');
+    const checkoutMessage = document.getElementById('checkoutMessage');
+    const checkoutCount = document.getElementById('checkoutCount');
+    const checkoutSubtotal = document.getElementById('checkoutSubtotal');
+    const checkoutTotal = document.getElementById('checkoutTotal');
+
+    const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
+    const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0), 0);
+    checkoutCount.textContent = String(cart.length);
+    checkoutSubtotal.textContent = `$${subtotal.toFixed(2)}`;
+    checkoutTotal.textContent = `$${subtotal.toFixed(2)}`;
+
+    checkoutForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const user = JSON.parse(localStorage.getItem('sulecomUser') || 'null');
+      if (!user) {
+        window.location.href = 'signin.html';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, items: cart, total: subtotal })
+        });
+
+        const result = await response.json();
+        checkoutMessage.textContent = result.message || 'Order placed.';
+        checkoutMessage.className = 'auth-message ' + (response.ok ? 'success' : 'error');
+
+        if (response.ok) {
+          localStorage.removeItem('sulecomCart');
+          checkoutForm.reset();
+          setTimeout(() => { window.location.href = 'home.html'; }, 1200);
+        }
+      } catch (error) {
+        checkoutMessage.textContent = 'Could not place order. Please try again.';
+        checkoutMessage.className = 'auth-message error';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -19,8 +19,9 @@
       </div>
       <div class="store-actions">
         <a href="index.html">Home</a>
-        <a href="signin.html">Sign In</a>
-        <div class="cart-pill">Cart <span id="cartCount">0</span></div>
+        <a href="seller.html">Sell</a>
+        <a href="cart.html">Cart <span id="cartCount">0</span></a>
+        <button id="logoutBtn" class="logout-btn" type="button">Log out</button>
       </div>
     </div>
     <nav class="store-nav">
@@ -47,66 +48,21 @@
       </div>
     </section>
 
-    <section class="product-grid store-product-grid">
-      <article class="product-card" data-name="Wireless Headphones" data-price="79.99">
-        <img src="https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=900&q=80" alt="Wireless Headphones" />
-        <div class="product-body">
-          <span class="product-badge">Top rated</span>
-          <h3>Wireless Headphones</h3>
-          <p>Immersive sound and all-day comfort for work and travel.</p>
-          <div class="product-meta">
-            <strong>$79.99</strong>
-            <button class="add-cart-btn" type="button">Add to Cart</button>
-          </div>
-        </div>
-      </article>
-
-      <article class="product-card" data-name="Smart Watch" data-price="129.00">
-        <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80" alt="Smart Watch" />
-        <div class="product-body">
-          <span class="product-badge">Trending</span>
-          <h3>Smart Watch</h3>
-          <p>Fitness tracking, notifications, and sleek design in one.</p>
-          <div class="product-meta">
-            <strong>$129.00</strong>
-            <button class="add-cart-btn" type="button">Add to Cart</button>
-          </div>
-        </div>
-      </article>
-
-      <article class="product-card" data-name="Running Sneakers" data-price="94.50">
-        <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80" alt="Running Sneakers" />
-        <div class="product-body">
-          <span class="product-badge">New</span>
-          <h3>Running Sneakers</h3>
-          <p>Lightweight support for your commute and everyday workouts.</p>
-          <div class="product-meta">
-            <strong>$94.50</strong>
-            <button class="add-cart-btn" type="button">Add to Cart</button>
-          </div>
-        </div>
-      </article>
-
-      <article class="product-card" data-name="Desk Lamp" data-price="39.99">
-        <img src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80" alt="Desk Lamp" />
-        <div class="product-body">
-          <span class="product-badge">Hot deal</span>
-          <h3>Desk Lamp</h3>
-          <p>Warm lighting with a clean design for any workspace.</p>
-          <div class="product-meta">
-            <strong>$39.99</strong>
-            <button class="add-cart-btn" type="button">Add to Cart</button>
-          </div>
-        </div>
-      </article>
+    <section class="products-toolbar">
+      <div class="section-tag">Marketplace</div>
+      <a href="seller.html" class="secondary-link">Sell an item</a>
     </section>
+
+    <section id="productGrid" class="product-grid store-product-grid"></section>
   </main>
 
   <script>
+    const productGrid = document.getElementById('productGrid');
     const welcomeName = document.getElementById('welcomeName');
     const welcomeEmail = document.getElementById('welcomeEmail');
     const accountBadge = document.getElementById('accountBadge');
     const cartCount = document.getElementById('cartCount');
+    const logoutBtn = document.getElementById('logoutBtn');
 
     const storedUser = JSON.parse(localStorage.getItem('sulecomUser') || 'null');
     if (!storedUser) {
@@ -122,23 +78,50 @@
       cartCount.textContent = cart.length;
     };
 
-    document.querySelectorAll('.add-cart-btn').forEach((button) => {
-      button.addEventListener('click', () => {
-        const card = button.closest('.product-card');
-        const product = {
-          name: card.dataset.name,
-          price: Number(card.dataset.price),
-        };
-        const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
-        cart.push(product);
-        localStorage.setItem('sulecomCart', JSON.stringify(cart));
-        updateCartCount();
-        button.textContent = 'Added';
-        button.disabled = true;
-      });
+    const renderProducts = async () => {
+      try {
+        const response = await fetch('/api/products');
+        const products = await response.json();
+
+        productGrid.innerHTML = products.map((product) => `
+          <article class="product-card" data-name="${product.name}" data-price="${product.price}">
+            <img src="${product.image || 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=900&q=80'}" alt="${product.name}" />
+            <div class="product-body">
+              <span class="product-badge">${product.category}</span>
+              <h3>${product.name}</h3>
+              <p>${product.description}</p>
+              <div class="product-meta">
+                <strong>$${Number(product.price).toFixed(2)}</strong>
+                <button class="add-cart-btn" type="button">Add to Cart</button>
+              </div>
+            </div>
+          </article>
+        `).join('');
+
+        document.querySelectorAll('.add-cart-btn').forEach((button) => {
+          button.addEventListener('click', () => {
+            const card = button.closest('.product-card');
+            const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
+            cart.push({ name: card.dataset.name, price: Number(card.dataset.price) });
+            localStorage.setItem('sulecomCart', JSON.stringify(cart));
+            updateCartCount();
+            button.textContent = 'Added';
+            button.disabled = true;
+          });
+        });
+      } catch (error) {
+        productGrid.innerHTML = '<div class="empty-state">Unable to load products right now.</div>';
+      }
+    };
+
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('sulecomUser');
+      localStorage.removeItem('sulecomCart');
+      window.location.href = 'signin.html';
     });
 
     updateCartCount();
+    renderProducts();
   </script>
 </body>
 </html>
