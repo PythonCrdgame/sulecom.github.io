@@ -1,72 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@100;300;400;700&display=swap" rel="stylesheet">
-    <title>SulE-Com!</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SulE-Com | Marketplace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body class="landing-page">
-    <header class="topbar">
-        <h1>SulE-Com</h1>
-        <nav>
-            <a href="signup.html">Sign Up</a>
-            <a href="signin.html">Sign In</a>
-        </nav>
-    </header>
+<body>
+  <header class="amazon-header">
+    <div class="top-strip">
+      <div class="brand-wrap">
+        <div class="brand">SulE-Com</div>
+      </div>
+      <div class="search-wrap">
+        <input type="text" placeholder="Search for products, brands, and more" />
+        <button>Search</button>
+      </div>
+      <nav class="header-links">
+        <a href="signin.html">Sign In</a>
+        <a href="signup.html">Create Account</a>
+        <a href="home.html">My Account</a>
+      </nav>
+    </div>
+    <div class="category-bar">
+      <span>All</span>
+      <span>Best Sellers</span>
+      <span>Deals</span>
+      <span>Electronics</span>
+      <span>Home</span>
+      <span>Fashion</span>
+      <span>Books</span>
+      <span>Prime</span>
+    </div>
+  </header>
 
-    <main class="hero">
-        <section class="hero-copy">
-            <p class="eyebrow">Community marketplace</p>
-            <h2>Buy and sell with trusted local users.</h2>
-            <p>This is a website to buy or sell items you and others will sell.</p>
-            <div class="cta-row">
-                <a class="primary-btn" href="signup.html">Create an account</a>
-                <a class="secondary-btn" href="signin.html">Log in</a>
-            </div>
-        </section>
-
-        <aside class="account-panel">
-            <h3>Account types</h3>
-            <ul>
-                <li>Buy & Sell</li>
-                <li>Buy Only</li>
-            </ul>
-        </aside>
-    </main>
-
-    <section class="user-section">
-        <h3>Current beta users</h3>
-        <ul id="user-list" class="user-list">
-            <li>Loading accounts...</li>
-        </ul>
+  <main class="page-shell">
+    <section class="hero-banner">
+      <div class="hero-copy">
+        <p class="eyebrow">Fresh deals this week</p>
+        <h1>Shop smarter for everyday essentials.</h1>
+        <p>Find trending products, trusted sellers, and local deals all in one place.</p>
+        <div class="hero-actions">
+          <a href="signup.html" class="primary-btn">Start shopping</a>
+          <a href="signin.html" class="secondary-btn">Log in</a>
+        </div>
+      </div>
+      <div class="hero-card">
+        <h3>Today’s spotlight</h3>
+        <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80" alt="Featured product" />
+        <div class="hero-price-row">
+          <strong>$89.99</strong>
+          <span>Limited stock</span>
+        </div>
+      </div>
     </section>
 
-    <script>
-        async function loadUsers() {
-            try {
-                const response = await fetch('/api/users');
-                const users = await response.json();
-                const list = document.getElementById('user-list');
+    <section class="promo-grid">
+      <article class="promo-card">
+        <span class="promo-tag">Top deals</span>
+        <h3>Smart home</h3>
+        <p>Save on lighting, speakers, and convenience tech.</p>
+      </article>
+      <article class="promo-card">
+        <span class="promo-tag">Trending</span>
+        <h3>Work from home</h3>
+        <p>Desk essentials built for comfort and productivity.</p>
+      </article>
+      <article class="promo-card">
+        <span class="promo-tag">New arrivals</span>
+        <h3>Fashion finds</h3>
+        <p>Fresh styles for every season at everyday prices.</p>
+      </article>
+    </section>
 
-                if (!users.length) {
-                    list.innerHTML = '<li>No users yet. Be the first to sign up.</li>';
-                    return;
-                }
+    <section class="product-section">
+      <div class="section-head">
+        <h2>Popular products</h2>
+        <a href="home.html">View all</a>
+      </div>
+      <div class="product-grid">
+        <article class="product-card">
+          <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80" alt="Watch" />
+          <div class="product-body">
+            <span class="badge">Best seller</span>
+            <h3>Smart Watch</h3>
+            <div class="stars">★★★★★</div>
+            <div class="price-row">
+              <strong>$129.00</strong>
+              <span>Free shipping</span>
+            </div>
+          </div>
+        </article>
 
-                list.innerHTML = users
-                    .map((user) => {
-                        const accountLabel = user.accountType === 'buyer' ? 'Buy Only' : 'Buy & Sell';
-                        return `<li><strong>${user.name}</strong> — ${user.email} — ${accountLabel}</li>`;
-                    })
-                    .join('');
-            } catch (error) {
-                document.getElementById('user-list').innerHTML = '<li>Unable to load accounts right now.</li>';
-            }
-        }
+        <article class="product-card">
+          <img src="https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=900&q=80" alt="Headphones" />
+          <div class="product-body">
+            <span class="badge">Hot deal</span>
+            <h3>Wireless Headphones</h3>
+            <div class="stars">★★★★★</div>
+            <div class="price-row">
+              <strong>$79.99</strong>
+              <span>Prime eligible</span>
+            </div>
+          </div>
+        </article>
 
-        loadUsers();
-    </script>
+        <article class="product-card">
+          <img src="https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=900&q=80" alt="Sneakers" />
+          <div class="product-body">
+            <span class="badge">Trending</span>
+            <h3>Running Sneakers</h3>
+            <div class="stars">★★★★★</div>
+            <div class="price-row">
+              <strong>$94.50</strong>
+              <span>New arrival</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="product-card">
+          <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80" alt="Earbuds" />
+          <div class="product-body">
+            <span class="badge">Top rated</span>
+            <h3>Noise Cancelling Earbuds</h3>
+            <div class="stars">★★★★★</div>
+            <div class="price-row">
+              <strong>$59.00</strong>
+              <span>2-day delivery</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
 </body>
 </html>
