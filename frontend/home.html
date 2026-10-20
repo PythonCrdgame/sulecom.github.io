@@ -1,92 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@100;300;400;700&display=swap" rel="stylesheet">
-    <title>Home | SulE-Com</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SulE-Com | Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body class="home-body">
-    <header class="home-header">
-        <div>
-            <p class="eyebrow">SulE-Com</p>
-            <h1>Marketplace home</h1>
+<body class="store-body">
+  <header class="store-header">
+    <div class="store-topbar">
+      <div class="brand-mark">SulE-Com</div>
+      <div class="store-search">
+        <input type="text" placeholder="Search for products, brands, and more" />
+        <button>Search</button>
+      </div>
+      <div class="store-actions">
+        <a href="index.html">Home</a>
+        <a href="signin.html">Sign In</a>
+        <div class="cart-pill">Cart <span id="cartCount">0</span></div>
+      </div>
+    </div>
+    <nav class="store-nav">
+      <span>All</span>
+      <span>Best Sellers</span>
+      <span>Electronics</span>
+      <span>Home</span>
+      <span>Fashion</span>
+      <span>Books</span>
+      <span>Prime</span>
+      <span>Deals</span>
+    </nav>
+  </header>
+
+  <main class="store-main">
+    <section class="welcome-strip">
+      <div>
+        <p class="mini-label">Welcome back</p>
+        <h1>Hello, <span id="welcomeName">Shopper</span></h1>
+      </div>
+      <div class="welcome-summary">
+        <span id="accountBadge">Buyer account</span>
+        <strong id="welcomeEmail">No email</strong>
+      </div>
+    </section>
+
+    <section class="product-grid">
+      <article class="product-card" data-name="Wireless Headphones" data-price="79.99">
+        <img src="https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=900&q=80" alt="Wireless Headphones" />
+        <div class="product-body">
+          <span class="product-badge">Top rated</span>
+          <h3>Wireless Headphones</h3>
+          <p>Immersive sound and all-day comfort for work and travel.</p>
+          <div class="product-meta">
+            <strong>$79.99</strong>
+            <button class="add-cart-btn" type="button">Add to Cart</button>
+          </div>
         </div>
-        <nav class="home-nav">
-            <a href="index.html">Home</a>
-            <button id="logoutBtn" class="logout-btn" type="button">Log out</button>
-        </nav>
-    </header>
+      </article>
 
-    <main class="home-main">
-        <aside class="profile-card">
-            <h2>Welcome</h2>
-            <p id="welcomeName">Loading user...</p>
-            <p id="accountType">Account type: --</p>
-            <p id="userEmail">Email: --</p>
-        </aside>
+      <article class="product-card" data-name="Smart Watch" data-price="129.00">
+        <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80" alt="Smart Watch" />
+        <div class="product-body">
+          <span class="product-badge">Trending</span>
+          <h3>Smart Watch</h3>
+          <p>Fitness tracking, notifications, and sleek design in one.</p>
+          <div class="product-meta">
+            <strong>$129.00</strong>
+            <button class="add-cart-btn" type="button">Add to Cart</button>
+          </div>
+        </div>
+      </article>
 
-        <section class="listing-panel">
-            <div class="search-row">
-                <input id="searchInput" type="text" placeholder="Search items or sellers">
-                <button type="button">Search</button>
-            </div>
+      <article class="product-card" data-name="Running Sneakers" data-price="94.50">
+        <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80" alt="Running Sneakers" />
+        <div class="product-body">
+          <span class="product-badge">New</span>
+          <h3>Running Sneakers</h3>
+          <p>Lightweight support for your commute and everyday workouts.</p>
+          <div class="product-meta">
+            <strong>$94.50</strong>
+            <button class="add-cart-btn" type="button">Add to Cart</button>
+          </div>
+        </div>
+      </article>
 
-            <div class="listing-grid">
-                <article class="listing-card">
-                    <span class="tag sell-tag">Sell</span>
-                    <h3>Vintage Lamp</h3>
-                    <p>Beautiful antique lamp in excellent condition.</p>
-                    <div class="listing-meta">
-                        <strong>$48</strong>
-                        <span>Seller: Mira</span>
-                    </div>
-                </article>
+      <article class="product-card" data-name="Desk Lamp" data-price="39.99">
+        <img src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80" alt="Desk Lamp" />
+        <div class="product-body">
+          <span class="product-badge">Hot deal</span>
+          <h3>Desk Lamp</h3>
+          <p>Warm lighting with a clean design for any workspace.</p>
+          <div class="product-meta">
+            <strong>$39.99</strong>
+            <button class="add-cart-btn" type="button">Add to Cart</button>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
 
-                <article class="listing-card">
-                    <span class="tag buy-tag">Buy</span>
-                    <h3>Used Bicycle</h3>
-                    <p>Good commuter bike with new tires and chain.</p>
-                    <div class="listing-meta">
-                        <strong>$120</strong>
-                        <span>Seller: Noah</span>
-                    </div>
-                </article>
+  <script>
+    const welcomeName = document.getElementById('welcomeName');
+    const welcomeEmail = document.getElementById('welcomeEmail');
+    const accountBadge = document.getElementById('accountBadge');
+    const cartCount = document.getElementById('cartCount');
 
-                <article class="listing-card">
-                    <span class="tag sell-tag">Sell</span>
-                    <h3>Gaming Headset</h3>
-                    <p>Wireless headset with noise canceling and mic.</p>
-                    <div class="listing-meta">
-                        <strong>$65</strong>
-                        <span>Seller: Ava</span>
-                    </div>
-                </article>
-            </div>
-        </section>
-    </main>
+    const storedUser = JSON.parse(localStorage.getItem('sulecomUser') || 'null');
+    if (!storedUser) {
+      window.location.href = 'signin.html';
+    } else {
+      welcomeName.textContent = storedUser.name || 'Shopper';
+      welcomeEmail.textContent = storedUser.email || 'No email';
+      accountBadge.textContent = storedUser.accountType === 'buyer' ? 'Buy Only account' : 'Buy & Sell account';
+    }
 
-    <script>
-        const welcomeName = document.getElementById('welcomeName');
-        const accountType = document.getElementById('accountType');
-        const userEmail = document.getElementById('userEmail');
-        const logoutBtn = document.getElementById('logoutBtn');
+    const updateCartCount = () => {
+      const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
+      cartCount.textContent = cart.length;
+    };
 
-        const storedUser = localStorage.getItem('sulecomUser');
-        if (!storedUser) {
-            window.location.href = 'signin.html';
-        } else {
-            const user = JSON.parse(storedUser);
-            welcomeName.textContent = user.name || 'User';
-            accountType.textContent = `Account type: ${user.accountType === 'buyer' ? 'Buy Only' : 'Buy & Sell'}`;
-            userEmail.textContent = `Email: ${user.email || 'N/A'}`;
-        }
+    document.querySelectorAll('.add-cart-btn').forEach((button) => {
+      button.addEventListener('click', () => {
+        const card = button.closest('.product-card');
+        const product = {
+          name: card.dataset.name,
+          price: Number(card.dataset.price),
+        };
 
-        logoutBtn.addEventListener('click', () => {
-            localStorage.removeItem('sulecomUser');
-            window.location.href = 'signin.html';
-        });
-    </script>
+        const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
+        cart.push(product);
+        localStorage.setItem('sulecomCart', JSON.stringify(cart));
+        updateCartCount();
+        button.textContent = 'Added';
+        button.disabled = true;
+      });
+    });
+
+    updateCartCount();
+  </script>
 </body>
 </html>

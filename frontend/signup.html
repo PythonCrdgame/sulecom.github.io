@@ -1,81 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@100;300;400;700&display=swap" rel="stylesheet">
-    <title>Sign-Up | SulE-Com</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up | SulE-Com</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body class="auth-body">
-    <main class="auth-card">
-        <h1>Create your SulE-Com account</h1>
-        <p>Choose the account that matches how you want to use the marketplace.</p>
+<body class="auth-page">
+  <div class="auth-shell">
+    <aside class="auth-brand-panel">
+      <div class="brand-mark">SulE-Com</div>
+      <h1>Build your buying and selling profile.</h1>
+      <p>Join a marketplace built for trusted local shopping, quick deals, and effortless selling.</p>
+      <ul>
+        <li>Buy and sell with confidence</li>
+        <li>Track your favorite deals</li>
+        <li>Access your account from anywhere</li>
+      </ul>
+    </aside>
 
-        <form id="signupForm">
-            <label for="name">Full name</label>
-            <input type="text" id="name" name="name" placeholder="Jane Doe" required>
+    <main class="auth-panel">
+      <div class="auth-topbar">
+        <span class="mini-label">Create account</span>
+        <a href="index.html">Back to store</a>
+      </div>
 
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" placeholder="you@example.com" required>
+      <h2>Sign up</h2>
 
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" placeholder="Create a password" required>
+      <form id="signupForm" class="auth-form">
+        <div class="field-row">
+          <label for="name">Full name</label>
+          <input type="text" id="name" name="name" placeholder="Jane Doe" required />
+        </div>
 
-            <div class="account-type-group">
-                <h2>Account type</h2>
-                <label class="radio-option">
-                    <input type="radio" name="accountType" value="buyer-seller" checked>
-                    <span>Buy & Sell</span>
-                </label>
-                <label class="radio-option">
-                    <input type="radio" name="accountType" value="buyer">
-                    <span>Buy Only</span>
-                </label>
-            </div>
+        <div class="field-row">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="you@example.com" required />
+        </div>
 
-            <button type="submit">Create account</button>
-        </form>
+        <div class="field-row">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Create a password" required />
+        </div>
 
-        <p id="signupMessage" class="message"></p>
-        <p class="switch-link">Already have an account? <a href="signin.html">Sign in</a></p>
+        <fieldset class="account-type-group">
+          <legend>Account type</legend>
+          <label class="radio-option">
+            <input type="radio" name="accountType" value="buyer-seller" checked />
+            <span>Buy & Sell</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="accountType" value="buyer" />
+            <span>Buy Only</span>
+          </label>
+        </fieldset>
+
+        <button type="submit" class="auth-btn primary">Create account</button>
+      </form>
+
+      <p id="signupMessage" class="auth-message"></p>
+
+      <p class="auth-switch">
+        Already have an account? <a href="signin.html">Sign in</a>
+      </p>
     </main>
+  </div>
 
-    <script>
-        const signupForm = document.getElementById('signupForm');
-        const signupMessage = document.getElementById('signupMessage');
+  <script>
+    const signupForm = document.getElementById('signupForm');
+    const signupMessage = document.getElementById('signupMessage');
 
-        signupForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const payload = {
-                name: signupForm.name.value,
-                email: signupForm.email.value,
-                password: signupForm.password.value,
-                accountType: signupForm.accountType.value,
-            };
+    signupForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const payload = {
+        name: signupForm.name.value,
+        email: signupForm.email.value,
+        password: signupForm.password.value,
+        accountType: signupForm.accountType.value,
+      };
 
-            try {
-                const response = await fetch('/api/signup', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                });
-
-                const result = await response.json();
-                signupMessage.textContent = result.message || 'Account processed.';
-                signupMessage.classList.add(response.ok ? 'success' : 'error');
-                signupMessage.classList.remove(response.ok ? 'error' : 'success');
-
-                if (response.ok) {
-                    signupForm.reset();
-                    localStorage.setItem('sulecomUser', JSON.stringify(result.user));
-                    window.location.href = 'home.html';
-                }
-            } catch (error) {
-                signupMessage.textContent = 'Something went wrong. Please try again.';
-                signupMessage.classList.add('error');
-            }
+      try {
+        const response = await fetch('/api/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
         });
-    </script>
+
+        const result = await response.json();
+        signupMessage.textContent = result.message || 'Account processed.';
+        signupMessage.className = 'auth-message ' + (response.ok ? 'success' : 'error');
+
+        if (response.ok) {
+          signupForm.reset();
+          localStorage.setItem('sulecomUser', JSON.stringify(result.user));
+          window.location.href = 'home.html';
+        }
+      } catch (error) {
+        signupMessage.textContent = 'Something went wrong. Please try again.';
+        signupMessage.className = 'auth-message error';
+      }
+    });
+  </script>
 </body>
 </html>

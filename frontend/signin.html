@@ -1,64 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@100;300;400;700&display=swap" rel="stylesheet">
-    <title>Sign-In | SulE-Com</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In | SulE-Com</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body class="auth-body">
-    <main class="auth-card">
-        <h1>Welcome back</h1>
-        <p>Sign in to continue to SulE-Com.</p>
+<body class="auth-page">
+  <div class="auth-shell">
+    <aside class="auth-brand-panel">
+      <div class="brand-mark">SulE-Com</div>
+      <h1>Welcome back to your marketplace.</h1>
+      <p>Sign in to keep shopping, track your orders, and manage your saved deals.</p>
+      <ul>
+        <li>Personalized shopping</li>
+        <li>Saved favorites</li>
+        <li>Fast checkout</li>
+      </ul>
+    </aside>
 
-        <form id="signinForm">
-            <label for="signin-email">Email</label>
-            <input type="email" id="signin-email" name="email" placeholder="you@example.com" required>
+    <main class="auth-panel">
+      <div class="auth-topbar">
+        <span class="mini-label">Sign in</span>
+        <a href="index.html">Back to store</a>
+      </div>
 
-            <label for="signin-password">Password</label>
-            <input type="password" id="signin-password" name="password" placeholder="Enter your password" required>
+      <h2>Welcome back</h2>
 
-            <button type="submit">Sign in</button>
-        </form>
+      <form id="signinForm" class="auth-form">
+        <div class="field-row">
+          <label for="signin-email">Email address</label>
+          <input type="email" id="signin-email" name="email" placeholder="you@example.com" required />
+        </div>
 
-        <p id="signinMessage" class="message"></p>
-        <p class="switch-link">Need an account? <a href="signup.html">Create one</a></p>
+        <div class="field-row">
+          <label for="signin-password">Password</label>
+          <input type="password" id="signin-password" name="password" placeholder="Enter your password" required />
+        </div>
+
+        <button type="submit" class="auth-btn primary">Sign in</button>
+      </form>
+
+      <p id="signinMessage" class="auth-message"></p>
+
+      <p class="auth-switch">
+        Need an account? <a href="signup.html">Create one</a>
+      </p>
     </main>
+  </div>
 
-    <script>
-        const signinForm = document.getElementById('signinForm');
-        const signinMessage = document.getElementById('signinMessage');
+  <script>
+    const signinForm = document.getElementById('signinForm');
+    const signinMessage = document.getElementById('signinMessage');
 
-        signinForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const payload = {
-                email: signinForm.email.value,
-                password: signinForm.password.value,
-            };
+    signinForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const payload = {
+        email: signinForm.email.value,
+        password: signinForm.password.value,
+      };
 
-            try {
-                const response = await fetch('/api/signin', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                });
-
-                const result = await response.json();
-                signinMessage.textContent = result.message || 'Login processed.';
-                signinMessage.classList.add(response.ok ? 'success' : 'error');
-                signinMessage.classList.remove(response.ok ? 'error' : 'success');
-
-                if (response.ok) {
-                    signinForm.reset();
-                    localStorage.setItem('sulecomUser', JSON.stringify(result.user));
-                    window.location.href = 'home.html';
-                }
-            } catch (error) {
-                signinMessage.textContent = 'Unable to sign in right now.';
-                signinMessage.classList.add('error');
-            }
+      try {
+        const response = await fetch('/api/signin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
         });
-    </script>
+
+        const result = await response.json();
+        signinMessage.textContent = result.message || 'Login processed.';
+        signinMessage.className = 'auth-message ' + (response.ok ? 'success' : 'error');
+
+        if (response.ok) {
+          signinForm.reset();
+          localStorage.setItem('sulecomUser', JSON.stringify(result.user));
+          window.location.href = 'home.html';
+        }
+      } catch (error) {
+        signinMessage.textContent = 'Unable to sign in right now.';
+        signinMessage.className = 'auth-message error';
+      }
+    });
+  </script>
 </body>
 </html>
