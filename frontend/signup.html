@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign Up | SulE-Com</title>
+  <title>Sign In | SulE-Com</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -13,96 +13,91 @@
   <div class="auth-shell">
     <aside class="auth-brand-panel">
       <div class="brand-mark">SulE-Com</div>
-      <h1>Build your buying and selling profile.</h1>
-      <p>Join a marketplace built for trusted local shopping, quick deals, and effortless selling.</p>
+      <h1>Welcome back to your marketplace.</h1>
+      <p>Sign in to keep shopping, track your orders, and manage your saved deals.</p>
       <ul>
-        <li>Buy and sell with confidence</li>
-        <li>Track your favorite deals</li>
-        <li>Access your account from anywhere</li>
+        <li>Personalized shopping</li>
+        <li>Saved favorites</li>
+        <li>Fast checkout</li>
       </ul>
     </aside>
 
     <main class="auth-panel">
       <div class="auth-topbar">
-        <span class="mini-label">Create account</span>
+        <span class="mini-label">Sign in</span>
         <a href="index.html">Back to store</a>
       </div>
 
-      <h2>Sign up</h2>
+      <h2>Welcome back</h2>
 
-      <form id="signupForm" class="auth-form">
+      <form id="signinForm" class="auth-form">
         <div class="field-row">
-          <label for="name">Full name</label>
-          <input type="text" id="name" name="name" placeholder="Jane Doe" required />
+          <label for="signin-email">Email address</label>
+          <input type="email" id="signin-email" name="email" placeholder="you@example.com" required />
         </div>
 
         <div class="field-row">
-          <label for="email">Email address</label>
-          <input type="email" id="email" name="email" placeholder="you@example.com" required />
+          <label for="signin-password">Password</label>
+          <input type="password" id="signin-password" name="password" placeholder="Enter your password" required />
         </div>
 
-        <div class="field-row">
-          <label for="password">Password</label>
-          <input type="password" id="password" name="password" placeholder="Create a password" required />
-        </div>
-
-        <fieldset class="account-type-group">
-          <legend>Account type</legend>
-          <label class="radio-option">
-            <input type="radio" name="accountType" value="buyer-seller" checked />
-            <span>Buy & Sell</span>
-          </label>
-          <label class="radio-option">
-            <input type="radio" name="accountType" value="buyer" />
-            <span>Buy Only</span>
-          </label>
-        </fieldset>
-
-        <button type="submit" class="auth-btn primary">Create account</button>
+        <button type="submit" class="auth-btn primary">Sign in</button>
       </form>
 
-      <p id="signupMessage" class="auth-message"></p>
+      <p id="signinMessage" class="auth-message"></p>
 
       <p class="auth-switch">
-        Already have an account? <a href="signin.html">Sign in</a>
+        Need an account? <a href="signup.html">Create one</a>
       </p>
     </main>
   </div>
 
   <script>
-    const signupForm = document.getElementById('signupForm');
-    const signupMessage = document.getElementById('signupMessage');
+    const signinForm = document.getElementById('signinForm');
+    const signinMessage = document.getElementById('signinMessage');
 
-    signupForm.addEventListener('submit', async (event) => {
+    const redirectIfLoggedIn = async () => {
+      try {
+        const response = await fetch('/api/session', { credentials: 'same-origin' });
+        if (response.ok) {
+          window.location.href = 'home.html';
+        }
+      } catch (error) {
+        // no-op
+      }
+    };
+
+    signinForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const payload = {
-        name: signupForm.name.value,
-        email: signupForm.email.value,
-        password: signupForm.password.value,
-        accountType: signupForm.accountType.value,
+        email: signinForm.email.value,
+        password: signinForm.password.value,
       };
 
       try {
-        const response = await fetch('/api/signup', {
+        const response = await fetch('/api/signin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
           body: JSON.stringify(payload),
         });
 
         const result = await response.json();
-        signupMessage.textContent = result.message || 'Account processed.';
-        signupMessage.className = 'auth-message ' + (response.ok ? 'success' : 'error');
+        signinMessage.textContent = result.message || 'Login processed.';
+        signinMessage.className = 'auth-message ' + (response.ok ? 'success' : 'error');
 
         if (response.ok) {
-          signupForm.reset();
+          signinForm.reset();
           localStorage.setItem('sulecomUser', JSON.stringify(result.user));
           window.location.href = 'home.html';
         }
       } catch (error) {
-        signupMessage.textContent = 'Something went wrong. Please try again.';
-        signupMessage.className = 'auth-message error';
+        signinMessage.textContent = 'Unable to sign in right now.';
+        signinMessage.className = 'auth-message error';
       }
     });
+
+    redirectIfLoggedIn();
   </script>
 </body>
 </html>

@@ -3,112 +3,150 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SulE-Com | Seller Dashboard</title>
+  <title>SulE-Com | Home</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
-<body class="seller-page">
-  <header class="seller-header">
-    <div class="brand-mark">SulE-Com</div>
-    <nav class="seller-nav">
-      <a href="home.html">Store</a>
-      <a href="cart.html">Cart</a>
-      <a href="checkout.html">Checkout</a>
-      <button id="logoutBtn" class="logout-btn" type="button">Log out</button>
+<body class="store-body">
+  <header class="store-header">
+    <div class="store-topbar">
+      <div class="brand-mark">SulE-Com</div>
+      <div class="store-search">
+        <input type="text" placeholder="Search for products, brands, and more" />
+        <button>Search</button>
+      </div>
+      <div class="store-actions">
+        <a href="index.html">Home</a>
+        <a href="seller.html">Sell</a>
+        <a href="cart.html">Cart <span id="cartCount">0</span></a>
+        <button id="logoutBtn" class="logout-btn" type="button">Log out</button>
+      </div>
+    </div>
+    <nav class="store-nav">
+      <span>All</span>
+      <span>Best Sellers</span>
+      <span>Electronics</span>
+      <span>Home</span>
+      <span>Fashion</span>
+      <span>Books</span>
+      <span>Prime</span>
+      <span>Deals</span>
     </nav>
   </header>
 
-  <main class="seller-shell">
-    <section class="seller-panel">
-      <div class="panel-header">
-        <div>
-          <p class="mini-label">Seller hub</p>
-          <h1>List a new item</h1>
-        </div>
-        <a href="home.html" class="secondary-link">Back to storefront</a>
+  <main class="store-main">
+    <section class="welcome-strip">
+      <div>
+        <p class="mini-label">Welcome back</p>
+        <h1>Hello, <span id="welcomeName">Shopper</span></h1>
       </div>
-
-      <form id="productForm" class="product-form">
-        <div class="field-row">
-          <label for="productName">Product name</label>
-          <input type="text" id="productName" name="productName" placeholder="Example: Bluetooth Speaker" required />
-        </div>
-
-        <div class="field-row two-col">
-          <div>
-            <label for="productPrice">Price</label>
-            <input type="number" id="productPrice" name="productPrice" min="0" step="0.01" placeholder="49.99" required />
-          </div>
-          <div>
-            <label for="productCategory">Category</label>
-            <input type="text" id="productCategory" name="productCategory" placeholder="Electronics" required />
-          </div>
-        </div>
-
-        <div class="field-row">
-          <label for="productImage">Image URL</label>
-          <input type="url" id="productImage" name="productImage" placeholder="https://example.com/image.jpg" />
-        </div>
-
-        <div class="field-row">
-          <label for="productDescription">Description</label>
-          <textarea id="productDescription" name="productDescription" rows="5" placeholder="Describe your product" required></textarea>
-        </div>
-
-        <button type="submit" class="auth-btn primary">Publish item</button>
-      </form>
-
-      <p id="sellerMessage" class="auth-message"></p>
+      <div class="welcome-summary">
+        <span id="accountBadge">Buyer account</span>
+        <strong id="welcomeEmail">No email</strong>
+      </div>
     </section>
+
+    <section class="products-toolbar">
+      <div class="section-tag">Marketplace</div>
+      <a href="seller.html" class="secondary-link">Sell an item</a>
+    </section>
+
+    <section id="productGrid" class="product-grid store-product-grid"></section>
   </main>
 
   <script>
-    const storedUser = JSON.parse(localStorage.getItem('sulecomUser') || 'null');
-    if (!storedUser) {
-      window.location.href = 'signin.html';
-    }
-
-    const productForm = document.getElementById('productForm');
-    const sellerMessage = document.getElementById('sellerMessage');
+    const productGrid = document.getElementById('productGrid');
+    const welcomeName = document.getElementById('welcomeName');
+    const welcomeEmail = document.getElementById('welcomeEmail');
+    const accountBadge = document.getElementById('accountBadge');
+    const cartCount = document.getElementById('cartCount');
     const logoutBtn = document.getElementById('logoutBtn');
 
-    productForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const payload = {
-        name: productForm.productName.value,
-        price: productForm.productPrice.value,
-        category: productForm.productCategory.value,
-        description: productForm.productDescription.value,
-        image: productForm.productImage.value,
-      };
-
+    const requireSession = async () => {
       try {
-        const response = await fetch('/api/products', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+        const response = await fetch('/api/session', { credentials: 'same-origin' });
+        const data = await response.json().catch(() => ({}));
 
-        const result = await response.json();
-        sellerMessage.textContent = result.message || 'Product saved.';
-        sellerMessage.className = 'auth-message ' + (response.ok ? 'success' : 'error');
-
-        if (response.ok) {
-          productForm.reset();
+        if (!response.ok || !data.user) {
+          localStorage.removeItem('sulecomUser');
+          window.location.href = 'signin.html';
+          return null;
         }
-      } catch (error) {
-        sellerMessage.textContent = 'Product could not be uploaded right now.';
-        sellerMessage.className = 'auth-message error';
-      }
-    });
 
-    logoutBtn.addEventListener('click', () => {
+        localStorage.setItem('sulecomUser', JSON.stringify(data.user));
+        return data.user;
+      } catch (error) {
+        localStorage.removeItem('sulecomUser');
+        window.location.href = 'signin.html';
+        return null;
+      }
+    };
+
+    const updateCartCount = () => {
+      const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
+      cartCount.textContent = cart.length;
+    };
+
+    const renderProducts = async () => {
+      try {
+        const response = await fetch('/api/products');
+        const products = await response.json();
+
+        productGrid.innerHTML = products.map((product) => `
+          <article class="product-card" data-name="${product.name}" data-price="${product.price}">
+            <img src="${product.image || 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=900&q=80'}" alt="${product.name}" />
+            <div class="product-body">
+              <span class="product-badge">${product.category}</span>
+              <h3>${product.name}</h3>
+              <p>${product.description}</p>
+              <div class="product-meta">
+                <strong>$${Number(product.price).toFixed(2)}</strong>
+                <button class="add-cart-btn" type="button">Add to Cart</button>
+              </div>
+            </div>
+          </article>
+        `).join('');
+
+        document.querySelectorAll('.add-cart-btn').forEach((button) => {
+          button.addEventListener('click', () => {
+            const card = button.closest('.product-card');
+            const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
+            cart.push({ name: card.dataset.name, price: Number(card.dataset.price) });
+            localStorage.setItem('sulecomCart', JSON.stringify(cart));
+            updateCartCount();
+            button.textContent = 'Added';
+            button.disabled = true;
+          });
+        });
+      } catch (error) {
+        productGrid.innerHTML = '<div class="empty-state">Unable to load products right now.</div>';
+      }
+    };
+
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+      } catch (error) {
+        // no-op
+      }
+
       localStorage.removeItem('sulecomUser');
       localStorage.removeItem('sulecomCart');
       window.location.href = 'signin.html';
     });
+
+    (async () => {
+      const user = await requireSession();
+      if (!user) return;
+
+      welcomeName.textContent = user.name || 'Shopper';
+      welcomeEmail.textContent = user.email || 'No email';
+      accountBadge.textContent = user.accountType === 'buyer' ? 'Buy Only account' : 'Buy & Sell account';
+      updateCartCount();
+      renderProducts();
+    })();
   </script>
 </body>
 </html>

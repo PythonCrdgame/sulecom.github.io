@@ -2,9 +2,10 @@ const express = require('express');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
+const session = require('express-session');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 const frontendDir = path.join(__dirname, '..', 'frontend');
 const dbPath = path.join(__dirname, 'sulecom.db');
 const db = new sqlite3.Database(dbPath);
@@ -28,6 +29,14 @@ const all = (sql, params = []) => new Promise((resolve, reject) => {
     if (err) return reject(err);
     resolve(rows);
   });
+});
+
+const sanitizeUser = (user) => ({
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  accountType: user.account_type || user.accountType,
+  createdAt: user.created_at || user.createdAt,
 });
 
 const seedProducts = async () => {
@@ -100,11 +109,43 @@ const initDb = async () => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(
+  session({
+    name: 'sulecom.sid',
+    secret: process.env.SESSION_SECRET || 'sulecom-local-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: false,
+      maxAge: 1000 * 60 * 60 * 8,
+    },
+  })
+);
 app.use(express.static(frontendDir));
 
 app.get('/api/health', async (_req, res) => {
   const users = await all('SELECT id FROM users');
   res.json({ status: 'ok', users: users.length });
+});
+
+app.get('/api/session', (req, res) => {
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({ authenticated: false, message: 'Not authenticated.' });
+  }
+
+  return res.json({ authenticated: true, user: req.session.user });
+});
+
+app.post('/api/logout', (req, res) => {
+  req.session.destroy((error) => {
+    if (error) {
+      return res.status(500).json({ message: 'Unable to log out right now.' });
+    }
+
+    return res.json({ message: 'Logged out successfully.' });
+  });
 });
 
 app.post('/api/signup', async (req, res) => {
@@ -135,13 +176,15 @@ app.post('/api/signup', async (req, res) => {
       [normalizedName, normalizedEmail, passwordHash, normalizedAccountType, new Date().toISOString()]
     );
 
-    const user = {
+    const user = sanitizeUser({
       id: result.lastID,
       name: normalizedName,
       email: normalizedEmail,
-      accountType: normalizedAccountType,
-      createdAt: new Date().toISOString(),
-    };
+      account_type: normalizedAccountType,
+      created_at: new Date().toISOString(),
+    });
+
+    req.session.user = user;
 
     return res.status(201).json({ message: 'Account created successfully.', user });
   } catch (error) {
@@ -170,13 +213,8 @@ app.post('/api/signin', async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password.' });
     }
 
-    const safeUser = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      accountType: user.account_type,
-      createdAt: user.created_at,
-    };
+    const safeUser = sanitizeUser(user);
+    req.session.user = safeUser;
 
     return res.json({ message: 'Sign in successful.', user: safeUser });
   } catch (error) {
@@ -211,10 +249,19 @@ app.get('/api/products', async (_req, res) => {
 
 app.post('/api/products', async (req, res) => {
   try {
+    if (!req.session || !req.session.user) {
+      return res.status(401).json({ message: 'Please sign in to publish products.' });
+    }
+
     const { name, price, category, description, image } = req.body || {};
 
     if (!name || !price || !category || !description) {
       return res.status(400).json({ message: 'Product name, price, category, and description are required.' });
+    }
+
+    const userRecord = await get('SELECT account_type FROM users WHERE id = ?', [req.session.user.id]);
+    if (!userRecord || userRecord.account_type !== 'buyer-seller') {
+      return res.status(403).json({ message: 'Only buyer-seller accounts can list products.' });
     }
 
     const result = await run(
@@ -226,7 +273,7 @@ app.post('/api/products', async (req, res) => {
         String(category).trim(),
         String(description).trim(),
         String(image || 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=900&q=80'),
-        1,
+        Number(req.session.user.id),
         new Date().toISOString(),
       ]
     );
@@ -240,15 +287,19 @@ app.post('/api/products', async (req, res) => {
 
 app.post('/api/orders', async (req, res) => {
   try {
-    const { userId, items, total } = req.body || {};
+    if (!req.session || !req.session.user) {
+      return res.status(401).json({ message: 'Please sign in to place an order.' });
+    }
 
-    if (!userId || !Array.isArray(items) || !items.length) {
-      return res.status(400).json({ message: 'A valid user and cart items are required.' });
+    const { items, total } = req.body || {};
+
+    if (!Array.isArray(items) || !items.length) {
+      return res.status(400).json({ message: 'A valid cart is required.' });
     }
 
     const result = await run(
       `INSERT INTO orders (user_id, items, total, created_at) VALUES (?, ?, ?, ?)`,
-      [Number(userId), JSON.stringify(items), Number(total || 0), new Date().toISOString()]
+      [Number(req.session.user.id), JSON.stringify(items), Number(total || 0), new Date().toISOString()]
     );
 
     return res.status(201).json({ message: 'Order placed successfully.', orderId: result.lastID });

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SulE-Com | Checkout</title>
+  <title>SulE-Com | Cart</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -14,91 +14,116 @@
     <div class="brand-mark">SulE-Com</div>
     <nav class="seller-nav">
       <a href="home.html">Store</a>
-      <a href="cart.html">Cart</a>
       <a href="seller.html">Sell</a>
+      <a href="checkout.html">Checkout</a>
+      <button id="logoutBtn" class="logout-btn" type="button">Log out</button>
     </nav>
   </header>
 
   <main class="checkout-shell">
-    <section class="checkout-panel">
+    <section class="cart-panel">
       <div class="panel-header">
         <div>
-          <p class="mini-label">Secure checkout</p>
-          <h1>Complete your order</h1>
+          <p class="mini-label">Your cart</p>
+          <h1>Ready to checkout</h1>
         </div>
+        <a href="home.html" class="secondary-link">Continue shopping</a>
       </div>
 
-      <form id="checkoutForm" class="checkout-form">
-        <div class="field-row">
-          <label for="fullName">Full name</label>
-          <input type="text" id="fullName" name="fullName" placeholder="Jane Doe" required />
-        </div>
-        <div class="field-row">
-          <label for="address">Shipping address</label>
-          <input type="text" id="address" name="address" placeholder="123 Main Street" required />
-        </div>
-        <div class="field-row">
-          <label for="cardNumber">Card number</label>
-          <input type="text" id="cardNumber" name="cardNumber" placeholder="4242 4242 4242 4242" required />
-        </div>
-        <button type="submit" class="auth-btn primary">Place order</button>
-      </form>
-
-      <p id="checkoutMessage" class="auth-message"></p>
+      <div id="cartItems" class="cart-list"></div>
     </section>
 
     <aside class="summary-panel">
       <h2>Order summary</h2>
-      <div class="summary-row"><span>Items</span><strong id="checkoutCount">0</strong></div>
-      <div class="summary-row"><span>Subtotal</span><strong id="checkoutSubtotal">$0.00</strong></div>
+      <div id="summaryRow" class="summary-row"><span>Items</span><strong id="summaryItems">0</strong></div>
+      <div class="summary-row"><span>Subtotal</span><strong id="summarySubtotal">$0.00</strong></div>
       <div class="summary-row"><span>Shipping</span><strong>Free</strong></div>
-      <div class="summary-row total"><span>Total</span><strong id="checkoutTotal">$0.00</strong></div>
+      <div class="summary-row total"><span>Total</span><strong id="summaryTotal">$0.00</strong></div>
+      <a href="checkout.html" class="primary-btn full-width">Proceed to checkout</a>
     </aside>
   </main>
 
   <script>
-    const checkoutForm = document.getElementById('checkoutForm');
-    const checkoutMessage = document.getElementById('checkoutMessage');
-    const checkoutCount = document.getElementById('checkoutCount');
-    const checkoutSubtotal = document.getElementById('checkoutSubtotal');
-    const checkoutTotal = document.getElementById('checkoutTotal');
+    const cartItems = document.getElementById('cartItems');
+    const summaryItems = document.getElementById('summaryItems');
+    const summarySubtotal = document.getElementById('summarySubtotal');
+    const summaryTotal = document.getElementById('summaryTotal');
+    const logoutBtn = document.getElementById('logoutBtn');
 
-    const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
-    const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0), 0);
-    checkoutCount.textContent = String(cart.length);
-    checkoutSubtotal.textContent = `$${subtotal.toFixed(2)}`;
-    checkoutTotal.textContent = `$${subtotal.toFixed(2)}`;
+    const requireSession = async () => {
+      try {
+        const response = await fetch('/api/session', { credentials: 'same-origin' });
+        const data = await response.json().catch(() => ({}));
 
-    checkoutForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
+        if (!response.ok || !data.user) {
+          localStorage.removeItem('sulecomUser');
+          window.location.href = 'signin.html';
+          return null;
+        }
 
-      const user = JSON.parse(localStorage.getItem('sulecomUser') || 'null');
-      if (!user) {
+        localStorage.setItem('sulecomUser', JSON.stringify(data.user));
+        return data.user;
+      } catch (error) {
+        localStorage.removeItem('sulecomUser');
         window.location.href = 'signin.html';
+        return null;
+      }
+    };
+
+    const renderCart = () => {
+      const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
+
+      if (!cart.length) {
+        cartItems.innerHTML = '<div class="empty-state">Your cart is empty. Add items from the marketplace.</div>';
+        summaryItems.textContent = '0';
+        summarySubtotal.textContent = '$0.00';
+        summaryTotal.textContent = '$0.00';
         return;
       }
 
-      try {
-        const response = await fetch('/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: user.id, items: cart, total: subtotal })
+      cartItems.innerHTML = cart.map((item, index) => `
+        <div class="cart-item">
+          <div>
+            <h3>${item.name}</h3>
+            <p>Qty: 1</p>
+          </div>
+          <div class="item-cost">
+            <strong>$${Number(item.price).toFixed(2)}</strong>
+            <button type="button" class="remove-item-btn" data-index="${index}">Remove</button>
+          </div>
+        </div>
+      `).join('');
+
+      summaryItems.textContent = String(cart.length);
+      const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0), 0);
+      summarySubtotal.textContent = `$${subtotal.toFixed(2)}`;
+      summaryTotal.textContent = `$${subtotal.toFixed(2)}`;
+
+      document.querySelectorAll('.remove-item-btn').forEach((button) => {
+        button.addEventListener('click', () => {
+          const index = Number(button.dataset.index);
+          const updated = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
+          updated.splice(index, 1);
+          localStorage.setItem('sulecomCart', JSON.stringify(updated));
+          renderCart();
         });
+      });
+    };
 
-        const result = await response.json();
-        checkoutMessage.textContent = result.message || 'Order placed.';
-        checkoutMessage.className = 'auth-message ' + (response.ok ? 'success' : 'error');
-
-        if (response.ok) {
-          localStorage.removeItem('sulecomCart');
-          checkoutForm.reset();
-          setTimeout(() => { window.location.href = 'home.html'; }, 1200);
-        }
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
       } catch (error) {
-        checkoutMessage.textContent = 'Could not place order. Please try again.';
-        checkoutMessage.className = 'auth-message error';
+        // no-op
       }
+
+      localStorage.removeItem('sulecomUser');
+      localStorage.removeItem('sulecomCart');
+      window.location.href = 'signin.html';
     });
+
+    requireSession();
+    renderCart();
   </script>
 </body>
 </html>

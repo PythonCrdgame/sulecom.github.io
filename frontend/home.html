@@ -3,125 +3,121 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SulE-Com | Home</title>
+  <title>Sign Up | SulE-Com</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
-<body class="store-body">
-  <header class="store-header">
-    <div class="store-topbar">
+<body class="auth-page">
+  <div class="auth-shell">
+    <aside class="auth-brand-panel">
       <div class="brand-mark">SulE-Com</div>
-      <div class="store-search">
-        <input type="text" placeholder="Search for products, brands, and more" />
-        <button>Search</button>
-      </div>
-      <div class="store-actions">
-        <a href="index.html">Home</a>
-        <a href="seller.html">Sell</a>
-        <a href="cart.html">Cart <span id="cartCount">0</span></a>
-        <button id="logoutBtn" class="logout-btn" type="button">Log out</button>
-      </div>
-    </div>
-    <nav class="store-nav">
-      <span>All</span>
-      <span>Best Sellers</span>
-      <span>Electronics</span>
-      <span>Home</span>
-      <span>Fashion</span>
-      <span>Books</span>
-      <span>Prime</span>
-      <span>Deals</span>
-    </nav>
-  </header>
+      <h1>Build your buying and selling profile.</h1>
+      <p>Join a marketplace built for trusted local shopping, quick deals, and effortless selling.</p>
+      <ul>
+        <li>Buy and sell with confidence</li>
+        <li>Track your favorite deals</li>
+        <li>Access your account from anywhere</li>
+      </ul>
+    </aside>
 
-  <main class="store-main">
-    <section class="welcome-strip">
-      <div>
-        <p class="mini-label">Welcome back</p>
-        <h1>Hello, <span id="welcomeName">Shopper</span></h1>
+    <main class="auth-panel">
+      <div class="auth-topbar">
+        <span class="mini-label">Create account</span>
+        <a href="index.html">Back to store</a>
       </div>
-      <div class="welcome-summary">
-        <span id="accountBadge">Buyer account</span>
-        <strong id="welcomeEmail">No email</strong>
-      </div>
-    </section>
 
-    <section class="products-toolbar">
-      <div class="section-tag">Marketplace</div>
-      <a href="seller.html" class="secondary-link">Sell an item</a>
-    </section>
+      <h2>Sign up</h2>
 
-    <section id="productGrid" class="product-grid store-product-grid"></section>
-  </main>
+      <form id="signupForm" class="auth-form">
+        <div class="field-row">
+          <label for="name">Full name</label>
+          <input type="text" id="name" name="name" placeholder="Jane Doe" required />
+        </div>
+
+        <div class="field-row">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="you@example.com" required />
+        </div>
+
+        <div class="field-row">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Create a password" required />
+        </div>
+
+        <fieldset class="account-type-group">
+          <legend>Account type</legend>
+          <label class="radio-option">
+            <input type="radio" name="accountType" value="buyer-seller" checked />
+            <span>Buy & Sell</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="accountType" value="buyer" />
+            <span>Buy Only</span>
+          </label>
+        </fieldset>
+
+        <button type="submit" class="auth-btn primary">Create account</button>
+      </form>
+
+      <p id="signupMessage" class="auth-message"></p>
+
+      <p class="auth-switch">
+        Already have an account? <a href="signin.html">Sign in</a>
+      </p>
+    </main>
+  </div>
 
   <script>
-    const productGrid = document.getElementById('productGrid');
-    const welcomeName = document.getElementById('welcomeName');
-    const welcomeEmail = document.getElementById('welcomeEmail');
-    const accountBadge = document.getElementById('accountBadge');
-    const cartCount = document.getElementById('cartCount');
-    const logoutBtn = document.getElementById('logoutBtn');
+    const signupForm = document.getElementById('signupForm');
+    const signupMessage = document.getElementById('signupMessage');
 
-    const storedUser = JSON.parse(localStorage.getItem('sulecomUser') || 'null');
-    if (!storedUser) {
-      window.location.href = 'signin.html';
-    } else {
-      welcomeName.textContent = storedUser.name || 'Shopper';
-      welcomeEmail.textContent = storedUser.email || 'No email';
-      accountBadge.textContent = storedUser.accountType === 'buyer' ? 'Buy Only account' : 'Buy & Sell account';
-    }
-
-    const updateCartCount = () => {
-      const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
-      cartCount.textContent = cart.length;
-    };
-
-    const renderProducts = async () => {
+    const redirectIfLoggedIn = async () => {
       try {
-        const response = await fetch('/api/products');
-        const products = await response.json();
-
-        productGrid.innerHTML = products.map((product) => `
-          <article class="product-card" data-name="${product.name}" data-price="${product.price}">
-            <img src="${product.image || 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=900&q=80'}" alt="${product.name}" />
-            <div class="product-body">
-              <span class="product-badge">${product.category}</span>
-              <h3>${product.name}</h3>
-              <p>${product.description}</p>
-              <div class="product-meta">
-                <strong>$${Number(product.price).toFixed(2)}</strong>
-                <button class="add-cart-btn" type="button">Add to Cart</button>
-              </div>
-            </div>
-          </article>
-        `).join('');
-
-        document.querySelectorAll('.add-cart-btn').forEach((button) => {
-          button.addEventListener('click', () => {
-            const card = button.closest('.product-card');
-            const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
-            cart.push({ name: card.dataset.name, price: Number(card.dataset.price) });
-            localStorage.setItem('sulecomCart', JSON.stringify(cart));
-            updateCartCount();
-            button.textContent = 'Added';
-            button.disabled = true;
-          });
-        });
+        const response = await fetch('/api/session', { credentials: 'same-origin' });
+        if (response.ok) {
+          window.location.href = 'home.html';
+        }
       } catch (error) {
-        productGrid.innerHTML = '<div class="empty-state">Unable to load products right now.</div>';
+        // no-op
       }
     };
 
-    logoutBtn.addEventListener('click', () => {
-      localStorage.removeItem('sulecomUser');
-      localStorage.removeItem('sulecomCart');
-      window.location.href = 'signin.html';
+    signupForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const payload = {
+        name: signupForm.name.value,
+        email: signupForm.email.value,
+        password: signupForm.password.value,
+        accountType: signupForm.accountType.value,
+      };
+
+      try {
+        const response = await fetch('/api/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify(payload),
+        });
+
+        const result = await response.json();
+        signupMessage.textContent = result.message || 'Account processed.';
+        signupMessage.className = 'auth-message ' + (response.ok ? 'success' : 'error');
+
+        if (response.ok) {
+          signupForm.reset();
+          localStorage.setItem('sulecomUser', JSON.stringify(result.user));
+          window.location.href = 'home.html';
+        }
+      } catch (error) {
+        signupMessage.textContent = 'Something went wrong. Please try again.';
+        signupMessage.className = 'auth-message error';
+      }
     });
 
-    updateCartCount();
-    renderProducts();
+    redirectIfLoggedIn();
   </script>
 </body>
 </html>
+

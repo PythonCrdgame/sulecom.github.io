@@ -3,86 +3,151 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign In | SulE-Com</title>
+  <title>SulE-Com | Seller Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
-<body class="auth-page">
-  <div class="auth-shell">
-    <aside class="auth-brand-panel">
-      <div class="brand-mark">SulE-Com</div>
-      <h1>Welcome back to your marketplace.</h1>
-      <p>Sign in to keep shopping, track your orders, and manage your saved deals.</p>
-      <ul>
-        <li>Personalized shopping</li>
-        <li>Saved favorites</li>
-        <li>Fast checkout</li>
-      </ul>
-    </aside>
+<body class="seller-page">
+  <header class="seller-header">
+    <div class="brand-mark">SulE-Com</div>
+    <nav class="seller-nav">
+      <a href="home.html">Store</a>
+      <a href="cart.html">Cart</a>
+      <a href="checkout.html">Checkout</a>
+      <button id="logoutBtn" class="logout-btn" type="button">Log out</button>
+    </nav>
+  </header>
 
-    <main class="auth-panel">
-      <div class="auth-topbar">
-        <span class="mini-label">Sign in</span>
-        <a href="index.html">Back to store</a>
+  <main class="seller-shell">
+    <section class="seller-panel">
+      <div class="panel-header">
+        <div>
+          <p class="mini-label">Seller hub</p>
+          <h1>List a new item</h1>
+        </div>
+        <a href="home.html" class="secondary-link">Back to storefront</a>
       </div>
 
-      <h2>Welcome back</h2>
-
-      <form id="signinForm" class="auth-form">
+      <form id="productForm" class="product-form">
         <div class="field-row">
-          <label for="signin-email">Email address</label>
-          <input type="email" id="signin-email" name="email" placeholder="you@example.com" required />
+          <label for="productName">Product name</label>
+          <input type="text" id="productName" name="productName" placeholder="Example: Bluetooth Speaker" required />
+        </div>
+
+        <div class="field-row two-col">
+          <div>
+            <label for="productPrice">Price</label>
+            <input type="number" id="productPrice" name="productPrice" min="0" step="0.01" placeholder="49.99" required />
+          </div>
+          <div>
+            <label for="productCategory">Category</label>
+            <input type="text" id="productCategory" name="productCategory" placeholder="Electronics" required />
+          </div>
         </div>
 
         <div class="field-row">
-          <label for="signin-password">Password</label>
-          <input type="password" id="signin-password" name="password" placeholder="Enter your password" required />
+          <label for="productImage">Image URL</label>
+          <input type="url" id="productImage" name="productImage" placeholder="https://example.com/image.jpg" />
         </div>
 
-        <button type="submit" class="auth-btn primary">Sign in</button>
+        <div class="field-row">
+          <label for="productDescription">Description</label>
+          <textarea id="productDescription" name="productDescription" rows="5" placeholder="Describe your product" required></textarea>
+        </div>
+
+        <button type="submit" class="auth-btn primary">Publish item</button>
       </form>
 
-      <p id="signinMessage" class="auth-message"></p>
-
-      <p class="auth-switch">
-        Need an account? <a href="signup.html">Create one</a>
-      </p>
-    </main>
-  </div>
+      <p id="sellerMessage" class="auth-message"></p>
+    </section>
+  </main>
 
   <script>
-    const signinForm = document.getElementById('signinForm');
-    const signinMessage = document.getElementById('signinMessage');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const productForm = document.getElementById('productForm');
+    const sellerMessage = document.getElementById('sellerMessage');
 
-    signinForm.addEventListener('submit', async (event) => {
+    const requireSession = async () => {
+      try {
+        const response = await fetch('/api/session', { credentials: 'same-origin' });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || !data.user) {
+          localStorage.removeItem('sulecomUser');
+          window.location.href = 'signin.html';
+          return null;
+        }
+
+        localStorage.setItem('sulecomUser', JSON.stringify(data.user));
+        return data.user;
+      } catch (error) {
+        localStorage.removeItem('sulecomUser');
+        window.location.href = 'signin.html';
+        return null;
+      }
+    };
+
+    (async () => {
+      const user = await requireSession();
+      if (!user) return;
+
+      if (user.accountType !== 'buyer-seller') {
+        sellerMessage.textContent = 'Buy-only accounts cannot publish products.';
+        sellerMessage.className = 'auth-message error';
+        productForm.querySelector('button').disabled = true;
+      }
+    })();
+
+    productForm.addEventListener('submit', async (event) => {
       event.preventDefault();
+
+      const user = JSON.parse(localStorage.getItem('sulecomUser') || 'null');
+      if (!user) {
+        window.location.href = 'signin.html';
+        return;
+      }
+
       const payload = {
-        email: signinForm.email.value,
-        password: signinForm.password.value,
+        name: productForm.productName.value,
+        price: productForm.productPrice.value,
+        category: productForm.productCategory.value,
+        description: productForm.productDescription.value,
+        image: productForm.productImage.value,
       };
 
       try {
-        const response = await fetch('/api/signin', {
+        const response = await fetch('/api/products', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
           body: JSON.stringify(payload),
         });
 
         const result = await response.json();
-        signinMessage.textContent = result.message || 'Login processed.';
-        signinMessage.className = 'auth-message ' + (response.ok ? 'success' : 'error');
+        sellerMessage.textContent = result.message || 'Product saved.';
+        sellerMessage.className = 'auth-message ' + (response.ok ? 'success' : 'error');
 
         if (response.ok) {
-          signinForm.reset();
-          localStorage.setItem('sulecomUser', JSON.stringify(result.user));
-          window.location.href = 'home.html';
+          productForm.reset();
         }
       } catch (error) {
-        signinMessage.textContent = 'Unable to sign in right now.';
-        signinMessage.className = 'auth-message error';
+        sellerMessage.textContent = 'Product could not be uploaded right now.';
+        sellerMessage.className = 'auth-message error';
       }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+      } catch (error) {
+        // no-op
+      }
+
+      localStorage.removeItem('sulecomUser');
+      localStorage.removeItem('sulecomCart');
+      window.location.href = 'signin.html';
     });
   </script>
 </body>
