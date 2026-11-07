@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: sulecom
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    disk:
+      name: sulecom-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DATABASE_PATH
+        value: /var/data/sulecom.db
+      - key: SESSION_DIR
+        value: /var/data
