@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign In | SulE-Com</title>
+  <title>Create account | SulE-Com</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -13,91 +13,53 @@
   <div class="auth-shell">
     <aside class="auth-brand-panel">
       <div class="brand-mark">SulE-Com</div>
-      <h1>Welcome back to your marketplace.</h1>
-      <p>Sign in to keep shopping, track your orders, and manage your saved deals.</p>
-      <ul>
-        <li>Personalized shopping</li>
-        <li>Saved favorites</li>
-        <li>Fast checkout</li>
-      </ul>
+      <h1>Build your buying and selling profile.</h1>
+      <p>Join a marketplace built for trusted local shopping, quick deals, and effortless selling.</p>
+      <ul><li>Buy and sell with confidence</li><li>Track your favorite deals</li><li>Access your account from anywhere</li></ul>
     </aside>
-
     <main class="auth-panel">
-      <div class="auth-topbar">
-        <span class="mini-label">Sign in</span>
-        <a href="index.html">Back to store</a>
-      </div>
-
-      <h2>Welcome back</h2>
-
-      <form id="signinForm" class="auth-form">
-        <div class="field-row">
-          <label for="signin-email">Email address</label>
-          <input type="email" id="signin-email" name="email" placeholder="you@example.com" required />
-        </div>
-
-        <div class="field-row">
-          <label for="signin-password">Password</label>
-          <input type="password" id="signin-password" name="password" placeholder="Enter your password" required />
-        </div>
-
-        <button type="submit" class="auth-btn primary">Sign in</button>
+      <div class="auth-topbar"><span class="mini-label">Create account</span><a href="index.html">Back to store</a></div>
+      <h2>Sign up</h2>
+      <form id="signupForm" class="auth-form">
+        <div class="field-row"><label for="name">Full name</label><input type="text" id="name" name="name" autocomplete="name" maxlength="100" required /></div>
+        <div class="field-row"><label for="email">Email address</label><input type="email" id="email" name="email" autocomplete="email" maxlength="254" required /></div>
+        <div class="field-row"><label for="password">Password (at least 12 characters)</label><input type="password" id="password" name="password" autocomplete="new-password" minlength="12" maxlength="72" required /></div>
+        <fieldset class="account-type-group"><legend>Account type</legend>
+          <label class="radio-option"><input type="radio" name="accountType" value="buyer-seller" checked /><span>Buy &amp; Sell</span></label>
+          <label class="radio-option"><input type="radio" name="accountType" value="buyer" /><span>Buy Only</span></label>
+        </fieldset>
+        <button type="submit" class="auth-btn primary">Create account</button>
       </form>
-
-      <p id="signinMessage" class="auth-message"></p>
-
-      <p class="auth-switch">
-        Need an account? <a href="signup.html">Create one</a>
-      </p>
+      <p id="signupMessage" class="auth-message" aria-live="polite"></p>
+      <p class="auth-switch">Already have an account? <a href="signin.html">Sign in</a></p>
     </main>
   </div>
-
   <script>
-    const signinForm = document.getElementById('signinForm');
-    const signinMessage = document.getElementById('signinMessage');
-
-    const redirectIfLoggedIn = async () => {
-      try {
-        const response = await fetch('/api/session', { credentials: 'same-origin' });
-        if (response.ok) {
-          window.location.href = 'home.html';
-        }
-      } catch (error) {
-        // no-op
-      }
-    };
-
-    signinForm.addEventListener('submit', async (event) => {
+    const signupForm = document.getElementById('signupForm');
+    const signupMessage = document.getElementById('signupMessage');
+    signupForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      const payload = {
-        email: signinForm.email.value,
-        password: signinForm.password.value,
-      };
-
+      const button = signupForm.querySelector('button[type="submit"]');
+      button.disabled = true;
       try {
-        const response = await fetch('/api/signin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify(payload),
+        const response = await fetch('/api/signup', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+          body: JSON.stringify({
+            name: signupForm.elements.name.value,
+            email: signupForm.elements.email.value,
+            password: signupForm.elements.password.value,
+            accountType: signupForm.elements.accountType.value,
+          }),
         });
-
-        const result = await response.json();
-        signinMessage.textContent = result.message || 'Login processed.';
-        signinMessage.className = 'auth-message ' + (response.ok ? 'success' : 'error');
-
-        if (response.ok) {
-          signinForm.reset();
-          localStorage.setItem('sulecomUser', JSON.stringify(result.user));
-          window.location.href = 'home.html';
-        }
-      } catch (error) {
-        signinMessage.textContent = 'Unable to sign in right now.';
-        signinMessage.className = 'auth-message error';
-      }
+        const result = await response.json().catch(() => ({}));
+        signupMessage.textContent = result.message || (response.ok ? 'Account created.' : 'Signup is currently unavailable. Please try again later.');
+        signupMessage.className = `auth-message ${response.ok ? 'success' : 'error'}`;
+        if (response.ok) window.location.assign('home.html');
+      } catch (_error) {
+        signupMessage.textContent = 'Could not reach the authentication server. The backend may not be deployed yet.';
+        signupMessage.className = 'auth-message error';
+      } finally { button.disabled = false; }
     });
-
-    redirectIfLoggedIn();
   </script>
 </body>
 </html>
