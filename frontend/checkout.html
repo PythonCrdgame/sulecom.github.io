@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SulE-Com | Cart</title>
+  <title>SulE-Com | Checkout</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -39,7 +39,7 @@
       <div class="summary-row"><span>Subtotal</span><strong id="summarySubtotal">$0.00</strong></div>
       <div class="summary-row"><span>Shipping</span><strong>Free</strong></div>
       <div class="summary-row total"><span>Total</span><strong id="summaryTotal">$0.00</strong></div>
-      <a href="checkout.html" class="primary-btn full-width">Proceed to checkout</a>
+      <button type="button" class="primary-btn full-width" id="checkoutBtn">Proceed to checkout</button>
     </aside>
   </main>
 
@@ -49,6 +49,16 @@
     const summarySubtotal = document.getElementById('summarySubtotal');
     const summaryTotal = document.getElementById('summaryTotal');
     const logoutBtn = document.getElementById('logoutBtn');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+
+    const safeCart = () => {
+      try {
+        const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
+        return Array.isArray(cart) ? cart : [];
+      } catch (_error) {
+        return [];
+      }
+    };
 
     const requireSession = async () => {
       try {
@@ -63,7 +73,7 @@
 
         localStorage.setItem('sulecomUser', JSON.stringify(data.user));
         return data.user;
-      } catch (error) {
+      } catch (_error) {
         localStorage.removeItem('sulecomUser');
         window.location.href = 'signin.html';
         return null;
@@ -71,38 +81,60 @@
     };
 
     const renderCart = () => {
-      const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
+      const cart = safeCart();
 
       if (!cart.length) {
         cartItems.innerHTML = '<div class="empty-state">Your cart is empty. Add items from the marketplace.</div>';
         summaryItems.textContent = '0';
         summarySubtotal.textContent = '$0.00';
         summaryTotal.textContent = '$0.00';
+        checkoutBtn.disabled = true;
         return;
       }
 
-      cartItems.innerHTML = cart.map((item, index) => `
-        <div class="cart-item">
-          <div>
-            <h3>${item.name}</h3>
-            <p>Qty: 1</p>
-          </div>
-          <div class="item-cost">
-            <strong>$${Number(item.price).toFixed(2)}</strong>
-            <button type="button" class="remove-item-btn" data-index="${index}">Remove</button>
-          </div>
-        </div>
-      `).join('');
+      checkoutBtn.disabled = false;
+      cartItems.innerHTML = cart.map((item, index) => {
+        const maxQty = Math.max(1, Number(item.maxQuantity || item.max_quantity || item.stock || 1));
+        const currentQty = Math.min(Math.max(1, Number(item.quantity || 1)), maxQty);
+        const qtyOptions = Array.from({ length: maxQty }, (_, i) => i + 1).map((value) => `
+          <option value="${value}" ${value === currentQty ? 'selected' : ''}>${value}</option>
+        `).join('');
 
-      summaryItems.textContent = String(cart.length);
-      const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0), 0);
+        return `
+          <div class="cart-item">
+            <div>
+              <h3>${item.name}</h3>
+              <p>Qty: <select class="qty-select" data-index="${index}">${qtyOptions}</select> / ${maxQty} max</p>
+            </div>
+            <div class="item-cost">
+              <strong>$${(Number(item.price) * currentQty).toFixed(2)}</strong>
+              <button type="button" class="remove-item-btn" data-index="${index}">Remove</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      summaryItems.textContent = String(cart.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0));
+      const subtotal = cart.reduce((sum, item) => sum + (Number(item.price) * (Number(item.quantity) || 1)), 0);
       summarySubtotal.textContent = `$${subtotal.toFixed(2)}`;
       summaryTotal.textContent = `$${subtotal.toFixed(2)}`;
+
+      document.querySelectorAll('.qty-select').forEach((select) => {
+        select.addEventListener('change', () => {
+          const index = Number(select.dataset.index);
+          const updated = safeCart();
+          const maxQty = Math.max(1, Number(updated[index].maxQuantity || updated[index].max_quantity || updated[index].stock || 1));
+          const nextQty = Math.min(Math.max(1, Number(select.value) || 1), maxQty);
+          updated[index].quantity = nextQty;
+          localStorage.setItem('sulecomCart', JSON.stringify(updated));
+          renderCart();
+        });
+      });
 
       document.querySelectorAll('.remove-item-btn').forEach((button) => {
         button.addEventListener('click', () => {
           const index = Number(button.dataset.index);
-          const updated = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
+          const updated = safeCart();
           updated.splice(index, 1);
           localStorage.setItem('sulecomCart', JSON.stringify(updated));
           renderCart();
@@ -113,7 +145,7 @@
     logoutBtn.addEventListener('click', async () => {
       try {
         await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
-      } catch (error) {
+      } catch (_error) {
         // no-op
       }
 
@@ -122,8 +154,17 @@
       window.location.href = 'signin.html';
     });
 
-    requireSession();
-    renderCart();
+    checkoutBtn.addEventListener('click', () => {
+      const cart = safeCart();
+      if (!cart.length) return;
+      alert('Checkout demo complete. This store is ready for a real payment flow next.');
+    });
+
+    (async () => {
+      const user = await requireSession();
+      if (!user) return;
+      renderCart();
+    })();
   </script>
 </body>
 </html>

@@ -39,6 +39,19 @@ const sanitizeUser = (user) => ({
   createdAt: user.created_at || user.createdAt,
 });
 
+const ensureProductColumns = async () => {
+  const columns = await all('PRAGMA table_info(products)');
+  const existing = new Set(columns.map((column) => column.name));
+
+  if (!existing.has('stock')) {
+    await run('ALTER TABLE products ADD COLUMN stock INTEGER NOT NULL DEFAULT 1');
+  }
+
+  if (!existing.has('max_quantity')) {
+    await run('ALTER TABLE products ADD COLUMN max_quantity INTEGER NOT NULL DEFAULT 1');
+  }
+};
+
 const seedProducts = async () => {
   const existing = await all('SELECT COUNT(*) AS count FROM products');
   const count = Number(existing[0]?.count || 0);
@@ -46,16 +59,16 @@ const seedProducts = async () => {
   if (count > 0) return;
 
   await run(
-    `INSERT INTO products (name, price, category, description, image, seller_id) VALUES
-      (?, ?, ?, ?, ?, ?),
-      (?, ?, ?, ?, ?, ?),
-      (?, ?, ?, ?, ?, ?),
-      (?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO products (name, price, category, description, image, seller_id, stock, max_quantity) VALUES
+      (?, ?, ?, ?, ?, ?, ?, ?),
+      (?, ?, ?, ?, ?, ?, ?, ?),
+      (?, ?, ?, ?, ?, ?, ?, ?),
+      (?, ?, ?, ?, ?, ?, ?, ? )`,
     [
-      'Wireless Headphones', 79.99, 'Electronics', 'Immersive sound and all-day comfort for work and travel.', 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=900&q=80', 1,
-      'Smart Watch', 129.0, 'Electronics', 'Fitness tracking, notifications, and sleek design in one.', 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80', 1,
-      'Running Sneakers', 94.5, 'Fashion', 'Lightweight support for your commute and everyday workouts.', 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80', 1,
-      'Desk Lamp', 39.99, 'Home', 'Warm lighting with a clean design for any workspace.', 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80', 1
+      'Wireless Headphones', 79.99, 'Electronics', 'Immersive sound and all-day comfort for work and travel.', 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=900&q=80', 1, 5, 2,
+      'Smart Watch', 129.0, 'Electronics', 'Fitness tracking, notifications, and sleek design in one.', 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80', 1, 10, 2,
+      'Running Sneakers', 94.5, 'Fashion', 'Lightweight support for your commute and everyday workouts.', 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80', 1, 8, 3,
+      'Desk Lamp', 39.99, 'Home', 'Warm lighting with a clean design for any workspace.', 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80', 1, 12, 4,
     ]
   );
 };
@@ -81,6 +94,8 @@ const initDb = async () => {
       description TEXT NOT NULL,
       image TEXT,
       seller_id INTEGER DEFAULT 1,
+      stock INTEGER NOT NULL DEFAULT 1,
+      max_quantity INTEGER NOT NULL DEFAULT 1,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
@@ -95,7 +110,9 @@ const initDb = async () => {
     )
   `);
 
-  const defaultSeller = await get(`SELECT id FROM users WHERE email = ?`, ['seller@sulecom.local']);
+  await ensureProductColumns();
+
+  const defaultSeller = await get('SELECT id FROM users WHERE email = ?', ['seller@sulecom.local']);
   if (!defaultSeller) {
     const hash = await bcrypt.hash('seller123', 10);
     await run(
@@ -134,7 +151,6 @@ app.get('/api/session', (req, res) => {
   if (!req.session || !req.session.user) {
     return res.status(401).json({ authenticated: false, message: 'Not authenticated.' });
   }
-
   return res.json({ authenticated: true, user: req.session.user });
 });
 
@@ -143,7 +159,6 @@ app.post('/api/logout', (req, res) => {
     if (error) {
       return res.status(500).json({ message: 'Unable to log out right now.' });
     }
-
     return res.json({ message: 'Logged out successfully.' });
   });
 });
@@ -185,7 +200,6 @@ app.post('/api/signup', async (req, res) => {
     });
 
     req.session.user = user;
-
     return res.status(201).json({ message: 'Account created successfully.', user });
   } catch (error) {
     console.error('Signup error:', error);
@@ -215,7 +229,6 @@ app.post('/api/signin', async (req, res) => {
 
     const safeUser = sanitizeUser(user);
     req.session.user = safeUser;
-
     return res.json({ message: 'Sign in successful.', user: safeUser });
   } catch (error) {
     console.error('Signin error:', error);
@@ -223,20 +236,10 @@ app.post('/api/signin', async (req, res) => {
   }
 });
 
-app.get('/api/users', async (_req, res) => {
-  try {
-    const rows = await all('SELECT id, name, email, account_type AS accountType, created_at AS createdAt FROM users ORDER BY id DESC');
-    return res.json(rows);
-  } catch (error) {
-    console.error('Users error:', error);
-    return res.status(500).json({ message: 'Could not load users.' });
-  }
-});
-
 app.get('/api/products', async (_req, res) => {
   try {
     const rows = await all(`
-      SELECT id, name, price, category, description, image, seller_id AS sellerId
+      SELECT id, name, price, category, description, image, seller_id AS sellerId, stock, max_quantity AS maxQuantity
       FROM products
       ORDER BY id DESC
     `);
@@ -253,10 +256,21 @@ app.post('/api/products', async (req, res) => {
       return res.status(401).json({ message: 'Please sign in to publish products.' });
     }
 
-    const { name, price, category, description, image } = req.body || {};
+    const { name, price, category, description, image, stock, maxQuantity } = req.body || {};
+    const parsedPrice = Number(price);
+    const parsedStock = Number(stock);
+    const parsedMaxQuantity = Number(maxQuantity);
 
     if (!name || !price || !category || !description) {
       return res.status(400).json({ message: 'Product name, price, category, and description are required.' });
+    }
+
+    if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+      return res.status(400).json({ message: 'Price must be greater than zero.' });
+    }
+
+    if (!Number.isFinite(parsedStock) || parsedStock < 1 || !Number.isFinite(parsedMaxQuantity) || parsedMaxQuantity < 1) {
+      return res.status(400).json({ message: 'Stock and max quantity must be whole numbers greater than zero.' });
     }
 
     const userRecord = await get('SELECT account_type FROM users WHERE id = ?', [req.session.user.id]);
@@ -265,15 +279,17 @@ app.post('/api/products', async (req, res) => {
     }
 
     const result = await run(
-      `INSERT INTO products (name, price, category, description, image, seller_id, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO products (name, price, category, description, image, seller_id, stock, max_quantity, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         String(name).trim(),
-        Number(price),
+        parsedPrice,
         String(category).trim(),
         String(description).trim(),
         String(image || 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=900&q=80'),
         Number(req.session.user.id),
+        Math.max(1, Math.floor(parsedStock)),
+        Math.max(1, Math.floor(parsedMaxQuantity)),
         new Date().toISOString(),
       ]
     );
@@ -297,6 +313,21 @@ app.post('/api/orders', async (req, res) => {
       return res.status(400).json({ message: 'A valid cart is required.' });
     }
 
+    for (const item of items) {
+      const productId = Number(item.productId || item.product_id);
+      const quantity = Number(item.quantity || 1);
+      const product = productId ? await get('SELECT stock, max_quantity AS maxQuantity FROM products WHERE id = ?', [productId]) : null;
+
+      if (!product) {
+        return res.status(400).json({ message: 'One or more products are no longer available.' });
+      }
+
+      const maxQty = Math.max(1, Number(product.maxQuantity || product.max_quantity || product.stock || 1));
+      if (quantity < 1 || quantity > maxQty || quantity > Number(product.stock || maxQty)) {
+        return res.status(400).json({ message: 'One or more quantities exceed the seller’s limit.' });
+      }
+    }
+
     const result = await run(
       `INSERT INTO orders (user_id, items, total, created_at) VALUES (?, ?, ?, ?)`,
       [Number(req.session.user.id), JSON.stringify(items), Number(total || 0), new Date().toISOString()]
@@ -313,11 +344,11 @@ app.get('/signup', (_req, res) => res.sendFile(path.join(frontendDir, 'signup.ht
 app.get('/signin', (_req, res) => res.sendFile(path.join(frontendDir, 'signin.html')));
 app.get('/home', (_req, res) => res.sendFile(path.join(frontendDir, 'home.html')));
 app.get('/seller', (_req, res) => res.sendFile(path.join(frontendDir, 'seller.html')));
-app.get('/cart', (_req, res) => res.sendFile(path.join(frontendDir, 'cart.html')));
+app.get('/cart', (_req, res) => res.sendFile(path.join(frontendDir, 'checkout.html')));
 app.get('/checkout', (_req, res) => res.sendFile(path.join(frontendDir, 'checkout.html')));
 app.get('/home.html', (_req, res) => res.sendFile(path.join(frontendDir, 'home.html')));
 app.get('/seller.html', (_req, res) => res.sendFile(path.join(frontendDir, 'seller.html')));
-app.get('/cart.html', (_req, res) => res.sendFile(path.join(frontendDir, 'cart.html')));
+app.get('/cart.html', (_req, res) => res.sendFile(path.join(frontendDir, 'checkout.html')));
 app.get('/checkout.html', (_req, res) => res.sendFile(path.join(frontendDir, 'checkout.html')));
 app.get('/', (_req, res) => res.sendFile(path.join(frontendDir, 'index.html')));
 

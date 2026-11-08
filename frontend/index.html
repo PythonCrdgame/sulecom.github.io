@@ -17,12 +17,12 @@
       </div>
       <div class="search-wrap">
         <input type="text" placeholder="Search for products, brands, and more" />
-        <button>Search</button>
+        <button type="button">Search</button>
       </div>
       <nav class="header-links">
         <a href="signin.html">Sign In</a>
         <a href="signup.html">Create Account</a>
-        <a href="home.html">My Account</a>
+        <button id="myAccountBtn" type="button" class="text-button">My Account</button>
       </nav>
     </div>
     <div class="category-bar">
@@ -79,7 +79,7 @@
     <section class="product-section">
       <div class="section-head">
         <h2>Popular products</h2>
-        <a href="home.html">View all</a>
+        <a href="signin.html">View all</a>
       </div>
       <div class="product-grid">
         <article class="product-card">
@@ -136,5 +136,22 @@
       </div>
     </section>
   </main>
+
+  <script>
+    const myAccountBtn = document.getElementById('myAccountBtn');
+    myAccountBtn.addEventListener('click', async () => {
+      try {
+        const response = await fetch('/api/session', { credentials: 'same-origin' });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok && data.user) {
+          window.location.href = 'home.html';
+        } else {
+          window.location.href = 'signin.html';
+        }
+      } catch (_error) {
+        window.location.href = 'signin.html';
+      }
+    });
+  </script>
 </body>
 </html>

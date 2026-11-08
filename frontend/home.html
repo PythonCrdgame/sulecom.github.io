@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SulE-Com | Marketplace</title>
+  <title>SulE-Com | Home</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -12,51 +12,186 @@
 <body class="store-body">
   <header class="store-header">
     <div class="store-topbar">
-      <a class="brand-mark" href="index.html">SulE-Com</a>
-      <div class="store-search"><input type="search" placeholder="Search products" aria-label="Search products" /><button type="button">Search</button></div>
-      <nav class="store-actions"><a href="index.html">Home</a><a href="seller.html">Sell</a><a href="cart.html">Cart <span id="cartCount">0</span></a><span id="accountLinks"><a href="signin.html">Sign in</a> <a href="signup.html">Create account</a></span><button id="logoutBtn" class="logout-btn" type="button" hidden>Log out</button></nav>
+      <div class="brand-mark">SulE-Com</div>
+      <div class="store-search">
+        <input type="text" placeholder="Search for products, brands, and more" />
+        <button type="button">Search</button>
+      </div>
+      <div class="store-actions">
+        <a href="index.html">Home</a>
+        <a href="seller.html">Sell</a>
+        <a href="checkout.html">Cart <span id="cartCount">0</span></a>
+        <button id="logoutBtn" class="logout-btn" type="button">Log out</button>
+      </div>
     </div>
-    <nav class="store-nav"><span>All</span><span>Best Sellers</span><span>Electronics</span><span>Home</span><span>Fashion</span><span>Deals</span></nav>
+    <nav class="store-nav">
+      <span>All</span>
+      <span>Best Sellers</span>
+      <span>Electronics</span>
+      <span>Home</span>
+      <span>Fashion</span>
+      <span>Books</span>
+      <span>Prime</span>
+      <span>Deals</span>
+    </nav>
   </header>
+
   <main class="store-main">
-    <section class="welcome-strip"><div><p class="mini-label">Marketplace</p><h1>Shop SulE-Com</h1></div><div class="welcome-summary"><span id="welcomeName">Browse products from local sellers</span></div></section>
-    <section class="products-toolbar"><div class="section-tag">Popular products</div><a href="seller.html" class="secondary-link">Sell an item</a></section>
+    <section class="welcome-strip">
+      <div>
+        <p class="mini-label">Welcome back</p>
+        <h1>Hello, <span id="welcomeName">Shopper</span></h1>
+      </div>
+      <div class="welcome-summary">
+        <span id="accountBadge">Buyer account</span>
+        <strong id="welcomeEmail">No email</strong>
+      </div>
+    </section>
+
+    <section class="products-toolbar">
+      <div class="section-tag">Marketplace</div>
+      <a href="seller.html" class="secondary-link">Sell an item</a>
+    </section>
+
     <section id="productGrid" class="product-grid store-product-grid" aria-live="polite"></section>
   </main>
+
   <script>
-    const grid = document.getElementById('productGrid');
-    const accountLinks = document.getElementById('accountLinks');
-    const logoutBtn = document.getElementById('logoutBtn');
+    const productGrid = document.getElementById('productGrid');
+    const welcomeName = document.getElementById('welcomeName');
+    const welcomeEmail = document.getElementById('welcomeEmail');
+    const accountBadge = document.getElementById('accountBadge');
     const cartCount = document.getElementById('cartCount');
-    const safeCart = () => { try { const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]'); return Array.isArray(cart) ? cart : []; } catch (_error) { return []; } };
-    const updateCartCount = () => { cartCount.textContent = safeCart().length; };
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    const safeCart = () => {
+      try {
+        const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
+        return Array.isArray(cart) ? cart : [];
+      } catch (_error) {
+        return [];
+      }
+    };
+
+    const updateCartCount = () => {
+      const cart = safeCart();
+      cartCount.textContent = String(cart.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0));
+    };
+
+    const requireSession = async () => {
+      try {
+        const response = await fetch('/api/session', { credentials: 'same-origin' });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || !data.user) {
+          localStorage.removeItem('sulecomUser');
+          window.location.href = 'signin.html';
+          return null;
+        }
+
+        localStorage.setItem('sulecomUser', JSON.stringify(data.user));
+        return data.user;
+      } catch (_error) {
+        localStorage.removeItem('sulecomUser');
+        window.location.href = 'signin.html';
+        return null;
+      }
+    };
+
+    const addToCart = (product) => {
+      const cart = safeCart();
+      const maxQty = Math.max(1, Number(product.maxQuantity || product.max_quantity || product.stock || 1));
+      const existing = cart.findIndex((item) => item.productId === product.id);
+
+      if (existing >= 0) {
+        const currentQty = Number(cart[existing].quantity || 1);
+        cart[existing].quantity = Math.min(currentQty + 1, maxQty);
+      } else {
+        cart.push({
+          productId: product.id,
+          name: product.name,
+          price: Number(product.price),
+          quantity: 1,
+          maxQuantity: maxQty,
+          stock: Number(product.stock || maxQty),
+        });
+      }
+
+      localStorage.setItem('sulecomCart', JSON.stringify(cart));
+      updateCartCount();
+    };
+
     const renderProducts = async () => {
       try {
         const response = await fetch('/api/products');
         if (!response.ok) throw new Error('Products unavailable');
+
         const products = await response.json();
-        grid.replaceChildren();
-        products.forEach((product) => {
-          const card = document.createElement('article'); card.className = 'product-card';
-          const image = document.createElement('img'); image.src = product.image || ''; image.alt = product.name || 'Product'; image.loading = 'lazy';
-          const body = document.createElement('div'); body.className = 'product-body';
-          const badge = document.createElement('span'); badge.className = 'product-badge'; badge.textContent = product.category || '';
-          const title = document.createElement('h3'); title.textContent = product.name || '';
-          const description = document.createElement('p'); description.textContent = product.description || '';
-          const meta = document.createElement('div'); meta.className = 'product-meta';
-          const price = document.createElement('strong'); price.textContent = `$${Number(product.price).toFixed(2)}`;
-          const add = document.createElement('button'); add.type = 'button'; add.className = 'add-cart-btn'; add.textContent = 'Add to Cart';
-          add.addEventListener('click', () => { const cart = safeCart(); cart.push({ productId: product.id, name: product.name, price: Number(product.price) }); localStorage.setItem('sulecomCart', JSON.stringify(cart)); updateCartCount(); add.textContent = 'Added'; });
-          meta.append(price, add); body.append(badge, title, description, meta); card.append(image, body); grid.append(card);
+        productGrid.innerHTML = products.map((product) => {
+          const maxQty = Math.max(1, Number(product.maxQuantity || product.max_quantity || product.stock || 1));
+          const stock = Math.max(1, Number(product.stock || maxQty));
+          return `
+            <article class="product-card" data-name="${product.name}" data-price="${product.price}">
+              <img src="${product.image || 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=900&q=80'}" alt="${product.name}" />
+              <div class="product-body">
+                <span class="product-badge">${product.category}</span>
+                <h3>${product.name}</h3>
+                <p>${product.description}</p>
+                <div class="product-meta">
+                  <strong>$${Number(product.price).toFixed(2)}</strong>
+                  <span class="stock-meta">${stock} left · Max ${maxQty} each</span>
+                </div>
+                <button class="add-cart-btn" type="button" data-product-id="${product.id}" data-product-name="${product.name}" data-product-price="${product.price}" data-product-max="${maxQty}" data-product-stock="${stock}">Add to Cart</button>
+              </div>
+            </article>
+          `;
+        }).join('');
+
+        document.querySelectorAll('.add-cart-btn').forEach((button) => {
+          button.addEventListener('click', () => {
+            const product = {
+              id: Number(button.dataset.productId),
+              name: button.dataset.productName,
+              price: Number(button.dataset.productPrice),
+              maxQuantity: Number(button.dataset.productMax || 1),
+              stock: Number(button.dataset.productStock || 1),
+            };
+            addToCart(product);
+            button.textContent = 'Added';
+            button.disabled = true;
+            setTimeout(() => {
+              button.textContent = 'Add to Cart';
+              button.disabled = false;
+            }, 700);
+          });
         });
-        if (!products.length) grid.textContent = 'No products are listed yet.';
-      } catch (_error) { grid.textContent = 'Unable to load products. Authentication and product APIs require the backend to be deployed.'; }
+      } catch (_error) {
+        productGrid.innerHTML = '<div class="empty-state">Unable to load products right now. Please try again.</div>';
+      }
     };
-    fetch('/api/session').then((response) => response.ok ? response.json() : null).then((data) => {
-      if (data && data.user) { document.getElementById('welcomeName').textContent = `Welcome, ${data.user.name}`; accountLinks.hidden = true; logoutBtn.hidden = false; }
-    }).catch(() => {});
-    logoutBtn.addEventListener('click', async () => { await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {}); localStorage.removeItem('sulecomUser'); window.location.href = 'index.html'; });
-    updateCartCount(); renderProducts();
+
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+      } catch (_error) {
+        // no-op
+      }
+
+      localStorage.removeItem('sulecomUser');
+      localStorage.removeItem('sulecomCart');
+      window.location.href = 'signin.html';
+    });
+
+    (async () => {
+      const user = await requireSession();
+      if (!user) return;
+
+      welcomeName.textContent = user.name || 'Shopper';
+      welcomeEmail.textContent = user.email || 'No email';
+      accountBadge.textContent = user.accountType === 'buyer' ? 'Buy Only account' : 'Buy & Sell account';
+      updateCartCount();
+      renderProducts();
+    })();
   </script>
 </body>
 </html>
