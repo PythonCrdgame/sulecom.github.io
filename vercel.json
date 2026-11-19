@@ -5,7 +5,7 @@
     { "src": "frontend/**", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "^/api(?:/.*)?$", "dest": "/api/[...path].js" },
+    { "src": "^/api(?:/.*)?$", "dest": "/api/[...path]" },
     { "src": "^/signup/?$", "dest": "/frontend/signup.html" },
     { "src": "^/signin/?$", "dest": "/frontend/signin.html" },
     { "src": "^/home/?$", "dest": "/frontend/home.html" },
