@@ -1,11 +1,11 @@
 {
   "version": 2,
   "builds": [
-    { "src": "backend/server.js", "use": "@vercel/node" },
+    { "src": "api/[...path].js", "use": "@vercel/node" },
     { "src": "frontend/**", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "^/api(?:/.*)?$", "dest": "/backend/server.js" },
+    { "src": "^/api(?:/.*)?$", "dest": "/api/[...path].js" },
     { "src": "^/signup/?$", "dest": "/frontend/signup.html" },
     { "src": "^/signin/?$", "dest": "/frontend/signin.html" },
     { "src": "^/home/?$", "dest": "/frontend/home.html" },
