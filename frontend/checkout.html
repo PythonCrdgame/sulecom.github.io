@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SulE-Com | Cart</title>
+  <title>SulE-Com | Checkout</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -11,11 +11,11 @@
 </head>
 <body class="checkout-page">
   <header class="seller-header">
-    <div class="brand-mark">SulE-Com</div>
+    <a class="brand-mark" href="index.html">SulE-Com</a>
     <nav class="seller-nav">
       <a href="home.html">Store</a>
       <a href="seller.html">Sell</a>
-      <a href="checkout.html">Checkout</a>
+      <a href="cart.html">Cart</a>
       <button id="logoutBtn" class="logout-btn" type="button">Log out</button>
     </nav>
   </header>
@@ -24,106 +24,190 @@
     <section class="cart-panel">
       <div class="panel-header">
         <div>
-          <p class="mini-label">Your cart</p>
-          <h1>Ready to checkout</h1>
+          <p class="mini-label">Checkout</p>
+          <h1>Review &amp; place order</h1>
         </div>
         <a href="home.html" class="secondary-link">Continue shopping</a>
       </div>
 
       <div id="cartItems" class="cart-list"></div>
+
+      <div style="margin-top: 2rem;">
+        <p class="mini-label">Order history</p>
+        <h2 style="margin: 0.35rem 0 0;">Recent orders</h2>
+        <div id="recentOrders" class="cart-list"></div>
+      </div>
     </section>
 
     <aside class="summary-panel">
       <h2>Order summary</h2>
+      <div class="summary-row"><span>Account</span><strong id="checkoutUser">Loading...</strong></div>
       <div id="summaryRow" class="summary-row"><span>Items</span><strong id="summaryItems">0</strong></div>
       <div class="summary-row"><span>Subtotal</span><strong id="summarySubtotal">$0.00</strong></div>
       <div class="summary-row"><span>Shipping</span><strong>Free</strong></div>
       <div class="summary-row total"><span>Total</span><strong id="summaryTotal">$0.00</strong></div>
-      <a href="checkout.html" class="primary-btn full-width">Proceed to checkout</a>
+      <button id="placeOrderBtn" type="button" class="primary-btn full-width">Place Order</button>
+      <p id="checkoutMessage" class="auth-message" aria-live="polite"></p>
     </aside>
   </main>
 
-  <script>
+  <script type="module">
+    import {
+      waitForAuthReady,
+      ensureUserDocuments,
+      placeOrder,
+      fetchUserOrders,
+      signOutUser,
+    } from '/js/firebase-bundle.js';
+
     const cartItems = document.getElementById('cartItems');
+    const recentOrders = document.getElementById('recentOrders');
+    const checkoutUser = document.getElementById('checkoutUser');
     const summaryItems = document.getElementById('summaryItems');
     const summarySubtotal = document.getElementById('summarySubtotal');
     const summaryTotal = document.getElementById('summaryTotal');
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    const checkoutMessage = document.getElementById('checkoutMessage');
     const logoutBtn = document.getElementById('logoutBtn');
 
-    const requireSession = async () => {
+    const getCart = () => {
       try {
-        const response = await fetch('/api/session', { credentials: 'same-origin' });
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok || !data.user) {
-          localStorage.removeItem('sulecomUser');
-          window.location.href = 'signin.html';
-          return null;
-        }
-
-        localStorage.setItem('sulecomUser', JSON.stringify(data.user));
-        return data.user;
-      } catch (error) {
-        localStorage.removeItem('sulecomUser');
-        window.location.href = 'signin.html';
-        return null;
+        const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
+        return Array.isArray(cart) ? cart : [];
+      } catch (_err) {
+        return [];
       }
     };
 
     const renderCart = () => {
-      const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
+      const cart = getCart();
+      cartItems.replaceChildren();
 
       if (!cart.length) {
-        cartItems.innerHTML = '<div class="empty-state">Your cart is empty. Add items from the marketplace.</div>';
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.textContent = 'Your cart is empty. Add items from the marketplace.';
+        cartItems.append(empty);
         summaryItems.textContent = '0';
         summarySubtotal.textContent = '$0.00';
         summaryTotal.textContent = '$0.00';
+        placeOrderBtn.disabled = true;
         return;
       }
 
-      cartItems.innerHTML = cart.map((item, index) => `
-        <div class="cart-item">
-          <div>
-            <h3>${item.name}</h3>
-            <p>Qty: 1</p>
-          </div>
-          <div class="item-cost">
-            <strong>$${Number(item.price).toFixed(2)}</strong>
-            <button type="button" class="remove-item-btn" data-index="${index}">Remove</button>
-          </div>
-        </div>
-      `).join('');
+      placeOrderBtn.disabled = false;
+      cart.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'cart-item';
+
+        const left = document.createElement('div');
+        const h3 = document.createElement('h3');
+        h3.textContent = item.name;
+        const p = document.createElement('p');
+        p.textContent = 'Qty: 1';
+        left.append(h3, p);
+
+        const right = document.createElement('div');
+        right.className = 'item-cost';
+        const priceEl = document.createElement('strong');
+        priceEl.textContent = `$${Number(item.price).toFixed(2)}`;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'remove-item-btn';
+        btn.textContent = 'Remove';
+        btn.addEventListener('click', () => {
+          const updated = getCart();
+          updated.splice(index, 1);
+          localStorage.setItem('sulecomCart', JSON.stringify(updated));
+          renderCart();
+        });
+        right.append(priceEl, btn);
+
+        row.append(left, right);
+        cartItems.append(row);
+      });
 
       summaryItems.textContent = String(cart.length);
       const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0), 0);
       summarySubtotal.textContent = `$${subtotal.toFixed(2)}`;
       summaryTotal.textContent = `$${subtotal.toFixed(2)}`;
+    };
 
-      document.querySelectorAll('.remove-item-btn').forEach((button) => {
-        button.addEventListener('click', () => {
-          const index = Number(button.dataset.index);
-          const updated = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
-          updated.splice(index, 1);
-          localStorage.setItem('sulecomCart', JSON.stringify(updated));
-          renderCart();
+    const renderOrders = async (uid) => {
+      recentOrders.replaceChildren();
+      try {
+        const orders = await fetchUserOrders(uid);
+        if (!orders.length) {
+          const empty = document.createElement('div');
+          empty.className = 'empty-state';
+          empty.textContent = 'No orders placed yet.';
+          recentOrders.append(empty);
+          return;
+        }
+        orders.forEach((order) => {
+          const row = document.createElement('div');
+          row.className = 'cart-item';
+
+          const left = document.createElement('div');
+          const title = document.createElement('h3');
+          title.textContent = `Order ${order.id}`;
+          const meta = document.createElement('p');
+          meta.textContent = `${order.itemCount} item(s) • $${Number(order.total).toFixed(2)}`;
+          left.append(title, meta);
+
+          const status = document.createElement('span');
+          status.className = 'order-status-pill';
+          status.textContent = order.status;
+
+          row.append(left, status);
+          recentOrders.append(row);
         });
-      });
+      } catch (_err) {
+        const errBox = document.createElement('div');
+        errBox.className = 'empty-state';
+        errBox.textContent = 'Unable to load order history.';
+        recentOrders.append(errBox);
+      }
     };
 
     logoutBtn.addEventListener('click', async () => {
-      try {
-        await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
-      } catch (error) {
-        // no-op
-      }
-
-      localStorage.removeItem('sulecomUser');
-      localStorage.removeItem('sulecomCart');
+      await signOutUser();
       window.location.href = 'signin.html';
     });
 
-    requireSession();
-    renderCart();
+    (async () => {
+      renderCart();
+      const user = await waitForAuthReady();
+      if (!user) {
+        window.location.href = 'signin.html';
+        return;
+      }
+
+      const profile = await ensureUserDocuments(user);
+      checkoutUser.textContent = profile.displayName || user.email || 'Authenticated User';
+      await renderOrders(user.uid);
+
+      placeOrderBtn.addEventListener('click', async () => {
+        const cart = getCart();
+        if (!cart.length) return;
+
+        placeOrderBtn.disabled = true;
+        checkoutMessage.textContent = 'Placing order...';
+        checkoutMessage.className = 'auth-message';
+        try {
+          const orderId = await placeOrder(cart);
+          localStorage.removeItem('sulecomCart');
+          renderCart();
+          checkoutMessage.textContent = `Order placed! Confirmation: ${orderId}`;
+          checkoutMessage.className = 'auth-message success';
+          await renderOrders(user.uid);
+        } catch (err) {
+          checkoutMessage.textContent = err instanceof Error ? err.message : 'Could not place order.';
+          checkoutMessage.className = 'auth-message error';
+          placeOrderBtn.disabled = false;
+        }
+      });
+    })();
   </script>
 </body>
 </html>

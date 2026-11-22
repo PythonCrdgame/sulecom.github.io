@@ -1,0 +1,203 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'accountType', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'accountType', 'photoURL', 'createdAt', 'updatedAt'])
+        && data.uid is string && data.uid == request.auth.uid && isValidId(data.uid)
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100
+        && data.accountType is string && data.accountType in ['buyer-seller', 'buyer']
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 500))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidUserPrivateInfo(data) {
+      return data.keys().hasAll(['uid', 'email', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'updatedAt'])
+        && data.uid is string && data.uid == request.auth.uid && isValidId(data.uid)
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 254
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidProduct(data) {
+      return data.keys().hasAll(['name', 'price', 'category', 'description', 'sellerId', 'sellerName', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['name', 'price', 'category', 'description', 'image', 'sellerId', 'sellerName', 'status', 'createdAt', 'updatedAt'])
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 120
+        && data.price is number && data.price > 0 && data.price <= 1000000
+        && data.category is string && data.category in ['Electronics', 'Home', 'Fashion', 'Books', 'Deals', 'Other']
+        && data.description is string && data.description.size() >= 1 && data.description.size() <= 1000
+        && (!('image' in data) || (data.image is string && data.image.size() <= 500))
+        && data.sellerId is string && data.sellerId == request.auth.uid && isValidId(data.sellerId)
+        && data.sellerName is string && data.sellerName.size() >= 1 && data.sellerName.size() <= 100
+        && data.status is string && data.status in ['active', 'archived']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll(['userId', 'itemCount', 'total', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['userId', 'itemCount', 'total', 'status', 'createdAt', 'updatedAt'])
+        && data.userId is string && data.userId == request.auth.uid && isValidId(data.userId)
+        && data.itemCount is number && data.itemCount >= 1 && data.itemCount <= 50
+        && data.total is number && data.total > 0 && data.total <= 10000000
+        && data.status is string && data.status in ['placed', 'completed', 'cancelled']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidOrderItem(data, orderId) {
+      return data.keys().hasAll(['orderId', 'userId', 'productId', 'name', 'price', 'quantity'])
+        && data.keys().hasOnly(['orderId', 'userId', 'productId', 'name', 'price', 'quantity'])
+        && data.orderId is string && data.orderId == orderId && isValidId(data.orderId)
+        && data.userId is string && data.userId == request.auth.uid && isValidId(data.userId)
+        && data.productId is string && data.productId.size() >= 1 && data.productId.size() <= 128
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 120
+        && data.price is number && data.price >= 0 && data.price <= 1000000
+        && data.quantity is number && data.quantity >= 1 && data.quantity <= 100;
+    }
+
+    match /test/connection {
+      allow get: if true;
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+      allow create: if isEmailVerified()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == userId
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isEmailVerified()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'accountType', 'photoURL', 'updatedAt']);
+      allow delete: if false;
+
+      match /private/{docId} {
+        allow get: if isValidId(userId) && isValidId(docId) && docId == 'info' && isOwner(userId);
+        allow list: if false;
+        allow create: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(docId)
+          && docId == 'info'
+          && isOwner(userId)
+          && isValidUserPrivateInfo(incoming())
+          && incoming().uid == userId
+          && incoming().updatedAt == request.time;
+        allow update: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(docId)
+          && docId == 'info'
+          && isOwner(userId)
+          && isValidUserPrivateInfo(incoming())
+          && incoming().uid == existing().uid
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['email', 'updatedAt']);
+        allow delete: if false;
+      }
+    }
+
+    match /products/{productId} {
+      allow get: if isValidId(productId)
+        && (existing().status == 'active' || (isSignedIn() && existing().sellerId == request.auth.uid));
+      allow list: if existing().status == 'active' || (isSignedIn() && existing().sellerId == request.auth.uid);
+      allow create: if isEmailVerified()
+        && isValidId(productId)
+        && isValidProduct(incoming())
+        && incoming().status == 'active'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountType == 'buyer-seller';
+      allow update: if isEmailVerified()
+        && isValidId(productId)
+        && isValidProduct(incoming())
+        && existing().sellerId == request.auth.uid
+        && incoming().sellerId == existing().sellerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'price', 'category', 'description', 'image', 'updatedAt'])
+          || (incoming().status == 'archived' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']))
+        );
+      allow delete: if isEmailVerified()
+        && isValidId(productId)
+        && existing().sellerId == request.auth.uid;
+    }
+
+    match /orders/{orderId} {
+      allow get: if isSignedIn() && isValidId(orderId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+      allow create: if isEmailVerified()
+        && isValidId(orderId)
+        && isValidOrder(incoming())
+        && incoming().status == 'placed'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isEmailVerified()
+        && isValidId(orderId)
+        && isValidOrder(incoming())
+        && existing().userId == request.auth.uid
+        && existing().status == 'placed'
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().status == 'cancelled'
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+      allow delete: if false;
+
+      match /items/{itemId} {
+        allow get: if isSignedIn()
+          && isValidId(orderId)
+          && isValidId(itemId)
+          && get(/databases/$(database)/documents/orders/$(orderId)).data.userId == request.auth.uid;
+        allow list: if isSignedIn() && existing().userId == request.auth.uid;
+        allow create: if isEmailVerified()
+          && isValidId(orderId)
+          && isValidId(itemId)
+          && isValidOrderItem(incoming(), orderId)
+          && existsAfter(/databases/$(database)/documents/orders/$(orderId))
+          && getAfter(/databases/$(database)/documents/orders/$(orderId)).data.userId == request.auth.uid;
+        allow update, delete: if false;
+      }
+    }
+  }
+}

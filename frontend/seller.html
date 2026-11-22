@@ -3,149 +3,221 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SulE-Com | Home</title>
+  <title>SulE-Com | Seller Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="store-body">
-  <header class="store-header">
-    <div class="store-topbar">
-      <div class="brand-mark">SulE-Com</div>
-      <div class="store-search">
-        <input type="text" placeholder="Search for products, brands, and more" />
-        <button>Search</button>
-      </div>
-      <div class="store-actions">
-        <a href="index.html">Home</a>
-        <a href="seller.html">Sell</a>
-        <a href="cart.html">Cart <span id="cartCount">0</span></a>
-        <button id="logoutBtn" class="logout-btn" type="button">Log out</button>
-      </div>
-    </div>
-    <nav class="store-nav">
-      <span>All</span>
-      <span>Best Sellers</span>
-      <span>Electronics</span>
-      <span>Home</span>
-      <span>Fashion</span>
-      <span>Books</span>
-      <span>Prime</span>
-      <span>Deals</span>
+  <header class="seller-header">
+    <a class="brand-mark" href="index.html">SulE-Com</a>
+    <nav class="seller-nav">
+      <a href="home.html">Store</a>
+      <a href="seller.html">Sell</a>
+      <a href="cart.html">Cart <span id="cartCount">0</span></a>
+      <button id="logoutBtn" class="logout-btn" type="button">Log out</button>
     </nav>
   </header>
 
-  <main class="store-main">
-    <section class="welcome-strip">
-      <div>
-        <p class="mini-label">Welcome back</p>
-        <h1>Hello, <span id="welcomeName">Shopper</span></h1>
+  <main class="seller-shell">
+    <section class="seller-panel">
+      <div class="panel-header">
+        <div>
+          <p class="mini-label">Seller Studio</p>
+          <h1>List an item</h1>
+        </div>
+        <span id="accountBadge">Checking account...</span>
       </div>
-      <div class="welcome-summary">
-        <span id="accountBadge">Buyer account</span>
-        <strong id="welcomeEmail">No email</strong>
+
+      <div id="buyerUpgradeBanner" class="empty-state" style="margin-top: 1rem;" hidden>
+        <p style="margin: 0 0 0.75rem;">Your account is currently set to <strong>Buy Only</strong>. Switch to a Buy &amp; Sell account to publish items.</p>
+        <button id="upgradeSellerBtn" type="button" class="primary-btn">Enable Buy &amp; Sell</button>
       </div>
+
+      <form id="productForm" class="product-form" style="margin-top: 1.2rem;">
+        <div class="field-row">
+          <label for="prodName">Product name</label>
+          <input type="text" id="prodName" name="name" maxlength="120" required />
+        </div>
+        <div class="two-col">
+          <div class="field-row">
+            <label for="prodPrice">Price (USD)</label>
+            <input type="number" id="prodPrice" name="price" min="0.01" max="1000000" step="0.01" required />
+          </div>
+          <div class="field-row">
+            <label for="prodCategory">Category</label>
+            <select id="prodCategory" name="category" required>
+              <option value="Electronics">Electronics</option>
+              <option value="Home">Home</option>
+              <option value="Fashion">Fashion</option>
+              <option value="Books">Books</option>
+              <option value="Deals">Deals</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <label for="prodImage">Image URL (optional)</label>
+          <input type="url" id="prodImage" name="image" maxlength="500" placeholder="https://images.unsplash.com/..." />
+        </div>
+        <div class="field-row">
+          <label for="prodDesc">Description</label>
+          <textarea id="prodDesc" name="description" rows="4" maxlength="1000" required></textarea>
+        </div>
+        <button type="submit" id="publishBtn" class="primary-btn">Publish listing</button>
+      </form>
+      <p id="sellerMessage" class="auth-message" aria-live="polite"></p>
     </section>
 
-    <section class="products-toolbar">
-      <div class="section-tag">Marketplace</div>
-      <a href="seller.html" class="secondary-link">Sell an item</a>
+    <section class="seller-panel">
+      <div class="panel-header">
+        <div>
+          <p class="mini-label">Inventory</p>
+          <h2>Your listings</h2>
+        </div>
+        <a href="home.html" class="secondary-link">View storefront</a>
+      </div>
+      <div id="sellerListings" class="cart-list"></div>
     </section>
-
-    <section id="productGrid" class="product-grid store-product-grid"></section>
   </main>
 
-  <script>
-    const productGrid = document.getElementById('productGrid');
-    const welcomeName = document.getElementById('welcomeName');
-    const welcomeEmail = document.getElementById('welcomeEmail');
+  <script type="module">
+    import {
+      waitForAuthReady,
+      ensureUserDocuments,
+      upgradeAccountToSeller,
+      createProductListing,
+      deleteProductListing,
+      subscribeSellerProducts,
+      signOutUser,
+    } from '/js/firebase-bundle.js';
+
     const accountBadge = document.getElementById('accountBadge');
+    const buyerUpgradeBanner = document.getElementById('buyerUpgradeBanner');
+    const upgradeSellerBtn = document.getElementById('upgradeSellerBtn');
+    const productForm = document.getElementById('productForm');
+    const publishBtn = document.getElementById('publishBtn');
+    const sellerMessage = document.getElementById('sellerMessage');
+    const sellerListings = document.getElementById('sellerListings');
     const cartCount = document.getElementById('cartCount');
     const logoutBtn = document.getElementById('logoutBtn');
 
-    const requireSession = async () => {
-      try {
-        const response = await fetch('/api/session', { credentials: 'same-origin' });
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok || !data.user) {
-          localStorage.removeItem('sulecomUser');
-          window.location.href = 'signin.html';
-          return null;
-        }
-
-        localStorage.setItem('sulecomUser', JSON.stringify(data.user));
-        return data.user;
-      } catch (error) {
-        localStorage.removeItem('sulecomUser');
-        window.location.href = 'signin.html';
-        return null;
-      }
-    };
-
     const updateCartCount = () => {
-      const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
-      cartCount.textContent = cart.length;
+      try {
+        const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
+        cartCount.textContent = String(Array.isArray(cart) ? cart.length : 0);
+      } catch (_err) {
+        cartCount.textContent = '0';
+      }
     };
 
-    const renderProducts = async () => {
-      try {
-        const response = await fetch('/api/products');
-        const products = await response.json();
-
-        productGrid.innerHTML = products.map((product) => `
-          <article class="product-card" data-name="${product.name}" data-price="${product.price}">
-            <img src="${product.image || 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=900&q=80'}" alt="${product.name}" />
-            <div class="product-body">
-              <span class="product-badge">${product.category}</span>
-              <h3>${product.name}</h3>
-              <p>${product.description}</p>
-              <div class="product-meta">
-                <strong>$${Number(product.price).toFixed(2)}</strong>
-                <button class="add-cart-btn" type="button">Add to Cart</button>
-              </div>
-            </div>
-          </article>
-        `).join('');
-
-        document.querySelectorAll('.add-cart-btn').forEach((button) => {
-          button.addEventListener('click', () => {
-            const card = button.closest('.product-card');
-            const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
-            cart.push({ name: card.dataset.name, price: Number(card.dataset.price) });
-            localStorage.setItem('sulecomCart', JSON.stringify(cart));
-            updateCartCount();
-            button.textContent = 'Added';
-            button.disabled = true;
-          });
-        });
-      } catch (error) {
-        productGrid.innerHTML = '<div class="empty-state">Unable to load products right now.</div>';
+    const renderSellerListings = (items) => {
+      sellerListings.replaceChildren();
+      if (!items.length) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.textContent = 'You have not published any items yet.';
+        sellerListings.append(empty);
+        return;
       }
+
+      items.forEach((item) => {
+        const row = document.createElement('div');
+        row.className = 'cart-item';
+
+        const info = document.createElement('div');
+        const title = document.createElement('h3');
+        title.textContent = item.name;
+        const meta = document.createElement('p');
+        meta.textContent = `${item.category} • $${Number(item.price).toFixed(2)}`;
+        info.append(title, meta);
+
+        const actions = document.createElement('div');
+        actions.className = 'item-cost';
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'remove-item-btn';
+        delBtn.textContent = 'Remove';
+        delBtn.addEventListener('click', async () => {
+          delBtn.disabled = true;
+          try {
+            await deleteProductListing(item.id);
+          } catch (err) {
+            sellerMessage.textContent = err instanceof Error ? err.message : 'Unable to delete listing.';
+            sellerMessage.className = 'auth-message error';
+            delBtn.disabled = false;
+          }
+        });
+
+        actions.append(delBtn);
+        row.append(info, actions);
+        sellerListings.append(row);
+      });
     };
 
     logoutBtn.addEventListener('click', async () => {
-      try {
-        await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
-      } catch (error) {
-        // no-op
-      }
-
-      localStorage.removeItem('sulecomUser');
-      localStorage.removeItem('sulecomCart');
+      await signOutUser();
       window.location.href = 'signin.html';
     });
 
     (async () => {
-      const user = await requireSession();
-      if (!user) return;
-
-      welcomeName.textContent = user.name || 'Shopper';
-      welcomeEmail.textContent = user.email || 'No email';
-      accountBadge.textContent = user.accountType === 'buyer' ? 'Buy Only account' : 'Buy & Sell account';
       updateCartCount();
-      renderProducts();
+      const user = await waitForAuthReady();
+      if (!user) {
+        window.location.href = 'signin.html';
+        return;
+      }
+
+      const profile = await ensureUserDocuments(user);
+      const syncRoleUI = (accountType) => {
+        const isSeller = accountType === 'buyer-seller';
+        accountBadge.textContent = isSeller ? 'Buy & Sell account' : 'Buy Only account';
+        buyerUpgradeBanner.hidden = isSeller;
+        publishBtn.disabled = !isSeller;
+      };
+      syncRoleUI(profile.accountType);
+
+      upgradeSellerBtn.addEventListener('click', async () => {
+        upgradeSellerBtn.disabled = true;
+        try {
+          await upgradeAccountToSeller(user.uid);
+          syncRoleUI('buyer-seller');
+          sellerMessage.textContent = 'Your account is now enabled for selling!';
+          sellerMessage.className = 'auth-message success';
+        } catch (err) {
+          sellerMessage.textContent = err instanceof Error ? err.message : 'Unable to upgrade account.';
+          sellerMessage.className = 'auth-message error';
+        } finally {
+          upgradeSellerBtn.disabled = false;
+        }
+      });
+
+      subscribeSellerProducts(user.uid, renderSellerListings);
+
+      productForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        publishBtn.disabled = true;
+        sellerMessage.textContent = 'Publishing listing...';
+        sellerMessage.className = 'auth-message';
+        try {
+          await createProductListing({
+            name: productForm.elements.name.value,
+            price: Number(productForm.elements.price.value),
+            category: productForm.elements.category.value,
+            image: productForm.elements.image.value,
+            description: productForm.elements.description.value,
+          });
+          productForm.reset();
+          sellerMessage.textContent = 'Listing published to the marketplace!';
+          sellerMessage.className = 'auth-message success';
+        } catch (err) {
+          sellerMessage.textContent = err instanceof Error ? err.message : 'Unable to publish listing.';
+          sellerMessage.className = 'auth-message error';
+        } finally {
+          publishBtn.disabled = false;
+        }
+      });
     })();
   </script>
 </body>

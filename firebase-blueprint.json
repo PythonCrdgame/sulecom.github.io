@@ -1,0 +1,238 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Non-PII marketplace account profile for an authenticated user.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name shown in the storefront.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "accountType": {
+          "type": "string",
+          "description": "Marketplace role preference.",
+          "enum": ["buyer-seller", "buyer"]
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Optional avatar URL from Google profile.",
+          "minLength": 0,
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when account profile was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when account profile was last updated."
+        }
+      },
+      "required": ["uid", "displayName", "accountType", "createdAt", "updatedAt"]
+    },
+    "UserPrivateInfo": {
+      "title": "UserPrivateInfo",
+      "description": "Isolated PII record containing the user's email address.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the account owner.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Verified account email address.",
+          "minLength": 3,
+          "maxLength": 254
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when private info was last updated."
+        }
+      },
+      "required": ["uid", "email", "updatedAt"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Marketplace product listing published by a buyer-seller user.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Product title.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "price": {
+          "type": "number",
+          "description": "Product price in USD."
+        },
+        "category": {
+          "type": "string",
+          "description": "Marketplace category.",
+          "enum": ["Electronics", "Home", "Fashion", "Books", "Deals", "Other"]
+        },
+        "description": {
+          "type": "string",
+          "description": "Product description.",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "image": {
+          "type": "string",
+          "description": "Product image URL.",
+          "minLength": 0,
+          "maxLength": 500
+        },
+        "sellerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the seller.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "sellerName": {
+          "type": "string",
+          "description": "Display name of the seller.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "status": {
+          "type": "string",
+          "description": "Listing visibility status.",
+          "enum": ["active", "archived"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when listing was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when listing was last updated."
+        }
+      },
+      "required": ["name", "price", "category", "description", "sellerId", "sellerName", "status", "createdAt", "updatedAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Order placed by an authenticated user.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the buyer.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "itemCount": {
+          "type": "number",
+          "description": "Total number of line items in the order."
+        },
+        "total": {
+          "type": "number",
+          "description": "Total order amount in USD."
+        },
+        "status": {
+          "type": "string",
+          "description": "Order lifecycle status.",
+          "enum": ["placed", "completed", "cancelled"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when order was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when order was last updated."
+        }
+      },
+      "required": ["userId", "itemCount", "total", "status", "createdAt", "updatedAt"]
+    },
+    "OrderItem": {
+      "title": "OrderItem",
+      "description": "Line item subcollection document belonging to an Order.",
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string",
+          "description": "Parent order document ID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the buyer owning the parent order.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "productId": {
+          "type": "string",
+          "description": "Product identifier.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "description": "Snapshot of product name.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "price": {
+          "type": "number",
+          "description": "Snapshot unit price in USD."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Ordered quantity."
+        }
+      },
+      "required": ["orderId", "userId", "productId", "name", "price", "quantity"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Non-PII account profile keyed by Firebase Auth UID."
+    },
+    "/users/{userId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/UserPrivateInfo" },
+      "description": "Owner-only PII document (docId='info') storing account email."
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Publicly browsable marketplace listings owned by buyer-seller accounts."
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Customer checkout orders owned by the purchasing user."
+    },
+    "/orders/{orderId}/items/{itemId}": {
+      "schema": { "$ref": "#/entities/OrderItem" },
+      "description": "Individual line items under a customer order."
+    }
+  }
+}

@@ -16,24 +16,24 @@
         <div class="brand">SulE-Com</div>
       </div>
       <div class="search-wrap">
-        <input type="text" placeholder="Search for products, brands, and more" />
-        <button>Search</button>
+        <input id="landingSearchInput" type="text" placeholder="Search for products, brands, and more" />
+        <button id="landingSearchBtn" type="button">Search</button>
       </div>
       <nav class="header-links">
-        <a href="signin.html">Sign In</a>
-        <a href="signup.html">Create Account</a>
-        <a href="home.html">My Account</a>
+        <a id="navSignIn" href="signin.html">Sign In</a>
+        <a id="navSignUp" href="signup.html">Create Account</a>
+        <a href="home.html">Marketplace</a>
+        <a id="navSell" href="seller.html" hidden>Sell</a>
+        <button id="landingLogoutBtn" class="logout-btn" type="button" hidden>Log out</button>
       </nav>
     </div>
-    <div class="category-bar">
-      <span>All</span>
-      <span>Best Sellers</span>
-      <span>Deals</span>
-      <span>Electronics</span>
-      <span>Home</span>
-      <span>Fashion</span>
-      <span>Books</span>
-      <span>Prime</span>
+    <div class="category-bar" id="landingCategories">
+      <span data-category="All" class="active">All</span>
+      <span data-category="Deals">Deals</span>
+      <span data-category="Electronics">Electronics</span>
+      <span data-category="Home">Home</span>
+      <span data-category="Fashion">Fashion</span>
+      <span data-category="Books">Books</span>
     </div>
   </header>
 
@@ -43,9 +43,9 @@
         <p class="eyebrow">Fresh deals this week</p>
         <h1>Shop smarter for everyday essentials.</h1>
         <p>Find trending products, trusted sellers, and local deals all in one place.</p>
-        <div class="hero-actions">
-          <a href="signup.html" class="primary-btn">Start shopping</a>
-          <a href="signin.html" class="secondary-btn">Log in</a>
+        <div class="hero-actions" id="heroActions">
+          <a href="signup.html" class="primary-btn" id="heroPrimaryBtn">Start shopping</a>
+          <a href="signin.html" class="secondary-btn" id="heroSecondaryBtn">Log in</a>
         </div>
       </div>
       <div class="hero-card">
@@ -136,5 +136,63 @@
       </div>
     </section>
   </main>
+
+  <script type="module">
+    import { observeAuthState, signOutUser } from '/js/firebase-bundle.js';
+
+    const navSignIn = document.getElementById('navSignIn');
+    const navSignUp = document.getElementById('navSignUp');
+    const navSell = document.getElementById('navSell');
+    const landingLogoutBtn = document.getElementById('landingLogoutBtn');
+    const heroPrimaryBtn = document.getElementById('heroPrimaryBtn');
+    const heroSecondaryBtn = document.getElementById('heroSecondaryBtn');
+    const searchInput = document.getElementById('landingSearchInput');
+    const searchBtn = document.getElementById('landingSearchBtn');
+    const categoryBar = document.getElementById('landingCategories');
+
+    observeAuthState((user) => {
+      if (user) {
+        navSignIn.hidden = true;
+        navSignUp.hidden = true;
+        navSell.hidden = false;
+        landingLogoutBtn.hidden = false;
+        heroPrimaryBtn.textContent = 'Browse marketplace';
+        heroPrimaryBtn.href = 'home.html';
+        heroSecondaryBtn.textContent = 'Sell an item';
+        heroSecondaryBtn.href = 'seller.html';
+      } else {
+        navSignIn.hidden = false;
+        navSignUp.hidden = false;
+        navSell.hidden = true;
+        landingLogoutBtn.hidden = true;
+        heroPrimaryBtn.textContent = 'Start shopping';
+        heroPrimaryBtn.href = 'signup.html';
+        heroSecondaryBtn.textContent = 'Log in';
+        heroSecondaryBtn.href = 'signin.html';
+      }
+    });
+
+    landingLogoutBtn.addEventListener('click', async () => {
+      await signOutUser();
+      window.location.reload();
+    });
+
+    const goSearch = () => {
+      const q = encodeURIComponent(searchInput.value.trim());
+      window.location.href = q ? `home.html?q=${q}` : 'home.html';
+    };
+
+    searchBtn.addEventListener('click', goSearch);
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') goSearch();
+    });
+
+    categoryBar.querySelectorAll('span[data-category]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const cat = el.dataset.category;
+        window.location.href = cat && cat !== 'All' ? `home.html?category=${encodeURIComponent(cat)}` : 'home.html';
+      });
+    });
+  </script>
 </body>
 </html>

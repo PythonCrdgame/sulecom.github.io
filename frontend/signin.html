@@ -14,41 +14,69 @@
     <aside class="auth-brand-panel">
       <div class="brand-mark">SulE-Com</div>
       <h1>Welcome back to your marketplace.</h1>
-      <p>Sign in to keep shopping, track your orders, and manage your saved deals.</p>
-      <ul><li>Personalized shopping</li><li>Saved favorites</li><li>Fast checkout</li></ul>
+      <p>Sign in with Google to keep shopping, track your orders, and list items for sale.</p>
+      <ul>
+        <li>Verified Google sign-in</li>
+        <li>Synced orders and seller listings</li>
+        <li>Fast checkout across sessions</li>
+      </ul>
     </aside>
     <main class="auth-panel">
-      <div class="auth-topbar"><span class="mini-label">Sign in</span><a href="index.html">Back to store</a></div>
+      <div class="auth-topbar">
+        <span class="mini-label">Sign in</span>
+        <a href="index.html">Back to store</a>
+      </div>
       <h2>Welcome back</h2>
-      <form id="signinForm" class="auth-form">
-        <div class="field-row"><label for="email">Email address</label><input type="email" id="email" name="email" autocomplete="email" required /></div>
-        <div class="field-row"><label for="password">Password</label><input type="password" id="password" name="password" autocomplete="current-password" required /></div>
-        <button type="submit" class="auth-btn primary">Sign in</button>
-      </form>
+      <p class="auth-note">Use your Google account to securely access your SulE-Com buyer and seller profile.</p>
+      <div class="auth-form" style="margin-top: 1.5rem;">
+        <button id="googleSigninBtn" type="button" class="auth-btn google-auth-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#4285F4" d="M23.52 12.27c0-.79-.07-1.54-.2-2.27H12v4.51h6.47c-.28 1.48-1.12 2.74-2.38 3.58v2.97h3.85c2.25-2.07 3.58-5.12 3.58-8.79z"/>
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.07 7.94-2.91l-3.85-2.97c-1.07.72-2.44 1.15-4.09 1.15-3.14 0-5.8-2.12-6.75-4.97H1.27v3.07C3.25 21.3 7.31 24 12 24z"/>
+            <path fill="#FBBC05" d="M5.25 14.3c-.24-.72-.38-1.49-.38-2.3s.14-1.58.38-2.3V6.63H1.27C.46 8.24 0 10.06 0 12s.46 3.76 1.27 5.37l3.98-3.07z"/>
+            <path fill="#EA4335" d="M12 4.73c1.76 0 3.34.61 4.58 1.8l3.44-3.44C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.27 6.63l3.98 3.07C6.2 6.85 8.86 4.73 12 4.73z"/>
+          </svg>
+          <span>Continue with Google</span>
+        </button>
+      </div>
       <p id="signinMessage" class="auth-message" aria-live="polite"></p>
       <p class="auth-switch">Need an account? <a href="signup.html">Create one</a></p>
     </main>
   </div>
-  <script>
-    const signinForm = document.getElementById('signinForm');
+  <script type="module">
+    import { signInWithGoogle, waitForAuthReady } from '/js/firebase-bundle.js';
+
+    const googleSigninBtn = document.getElementById('googleSigninBtn');
     const signinMessage = document.getElementById('signinMessage');
-    signinForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const button = signinForm.querySelector('button[type="submit"]');
-      button.disabled = true;
+
+    waitForAuthReady().then((user) => {
+      if (user) {
+        window.location.assign('home.html');
+      }
+    });
+
+    googleSigninBtn.addEventListener('click', async () => {
+      googleSigninBtn.disabled = true;
+      signinMessage.textContent = 'Opening Google sign-in...';
+      signinMessage.className = 'auth-message';
       try {
-        const response = await fetch('/api/signin', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-          body: JSON.stringify({ email: signinForm.elements.email.value, password: signinForm.elements.password.value }),
-        });
-        const result = await response.json().catch(() => ({}));
-        signinMessage.textContent = result.message || (response.ok ? 'Signed in.' : 'Sign in is currently unavailable. Please try again later.');
-        signinMessage.className = `auth-message ${response.ok ? 'success' : 'error'}`;
-        if (response.ok) window.location.assign('home.html');
-      } catch (_error) {
-        signinMessage.textContent = 'Could not reach the authentication server. The backend may not be deployed yet.';
+        await signInWithGoogle();
+        signinMessage.textContent = 'Signed in! Redirecting to marketplace...';
+        signinMessage.className = 'auth-message success';
+        window.location.assign('home.html');
+      } catch (error) {
+        const code = error && typeof error === 'object' ? error.code : '';
+        if (code === 'auth/popup-closed-by-user') {
+          signinMessage.textContent = 'Sign-in popup was closed before completing.';
+        } else if (code === 'auth/popup-blocked') {
+          signinMessage.textContent = 'Popup was blocked by your browser. Please allow popups and try again.';
+        } else {
+          signinMessage.textContent = error instanceof Error ? error.message : 'Unable to sign in right now.';
+        }
         signinMessage.className = 'auth-message error';
-      } finally { button.disabled = false; }
+      } finally {
+        googleSigninBtn.disabled = false;
+      }
     });
   </script>
 </body>

@@ -5,14 +5,20 @@
   "description": "SulE-Com marketplace with accounts, listings, cart, and checkout",
   "main": "backend/server.js",
   "scripts": {
-    "dev": "node backend/server.js",
+    "build:client": "esbuild src/firebase.ts --bundle --format=esm --platform=browser --outfile=frontend/js/firebase-bundle.js",
+    "dev": "npm run build:client && node backend/server.js",
     "start": "node backend/server.js",
-    "build": "node --check backend/server.js",
-    "lint": "node --check backend/server.js"
+    "build": "tsc --noEmit && npm run build:client && node --check backend/server.js",
+    "lint": "tsc --noEmit && node --check backend/server.js && eslint firestore.rules"
   },
   "dependencies": {
+    "@firebase/eslint-plugin-security-rules": "^0.0.2",
     "bcryptjs": "^2.4.3",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.15.0",
     "express": "^4.21.2",
-    "express-session": "^1.18.1"
+    "express-session": "^1.18.1",
+    "firebase": "^13.4.0",
+    "typescript": "^7.0.2"
   }
 }

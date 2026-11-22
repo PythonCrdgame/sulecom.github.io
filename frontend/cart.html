@@ -11,11 +11,13 @@
 </head>
 <body class="checkout-page">
   <header class="seller-header">
-    <div class="brand-mark">SulE-Com</div>
+    <a class="brand-mark" href="index.html">SulE-Com</a>
     <nav class="seller-nav">
       <a href="home.html">Store</a>
       <a href="seller.html">Sell</a>
       <a href="checkout.html">Checkout</a>
+      <a id="cartSignInLink" href="signin.html">Sign in</a>
+      <button id="logoutBtn" class="logout-btn" type="button" hidden>Log out</button>
     </nav>
   </header>
 
@@ -42,11 +44,25 @@
     </aside>
   </main>
 
-  <script>
+  <script type="module">
+    import { observeAuthState, signOutUser } from '/js/firebase-bundle.js';
+
     const cartItems = document.getElementById('cartItems');
     const summaryItems = document.getElementById('summaryItems');
     const summarySubtotal = document.getElementById('summarySubtotal');
     const summaryTotal = document.getElementById('summaryTotal');
+    const cartSignInLink = document.getElementById('cartSignInLink');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    observeAuthState((user) => {
+      cartSignInLink.hidden = Boolean(user);
+      logoutBtn.hidden = !user;
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      await signOutUser();
+      window.location.href = 'index.html';
+    });
 
     const renderCart = () => {
       const cart = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
@@ -59,33 +75,42 @@
         return;
       }
 
-      cartItems.innerHTML = cart.map((item, index) => `
-        <div class="cart-item">
-          <div>
-            <h3>${item.name}</h3>
-            <p>Qty: 1</p>
-          </div>
-          <div class="item-cost">
-            <strong>$${Number(item.price).toFixed(2)}</strong>
-            <button type="button" class="remove-item-btn" data-index="${index}">Remove</button>
-          </div>
-        </div>
-      `).join('');
+      cartItems.replaceChildren();
+      cart.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'cart-item';
 
-      summaryItems.textContent = String(cart.length);
-      const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0), 0);
-      summarySubtotal.textContent = `$${subtotal.toFixed(2)}`;
-      summaryTotal.textContent = `$${subtotal.toFixed(2)}`;
+        const left = document.createElement('div');
+        const h3 = document.createElement('h3');
+        h3.textContent = item.name;
+        const p = document.createElement('p');
+        p.textContent = 'Qty: 1';
+        left.append(h3, p);
 
-      document.querySelectorAll('.remove-item-btn').forEach((button) => {
-        button.addEventListener('click', () => {
-          const index = Number(button.dataset.index);
+        const right = document.createElement('div');
+        right.className = 'item-cost';
+        const priceEl = document.createElement('strong');
+        priceEl.textContent = `$${Number(item.price).toFixed(2)}`;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'remove-item-btn';
+        btn.textContent = 'Remove';
+        btn.addEventListener('click', () => {
           const updated = JSON.parse(localStorage.getItem('sulecomCart') || '[]');
           updated.splice(index, 1);
           localStorage.setItem('sulecomCart', JSON.stringify(updated));
           renderCart();
         });
+        right.append(priceEl, btn);
+
+        row.append(left, right);
+        cartItems.append(row);
       });
+
+      summaryItems.textContent = String(cart.length);
+      const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0), 0);
+      summarySubtotal.textContent = `$${subtotal.toFixed(2)}`;
+      summaryTotal.textContent = `$${subtotal.toFixed(2)}`;
     };
 
     renderCart();

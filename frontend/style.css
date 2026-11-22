@@ -456,6 +456,7 @@ button, input, textarea {
 }
 
 .field-row input,
+.field-row select,
 .field-row textarea {
   border: 1px solid var(--line);
   border-radius: 0.75rem;
@@ -489,6 +490,25 @@ button, input, textarea {
 
 .auth-btn {
   width: 100%;
+  gap: 0.65rem;
+}
+
+.google-auth-btn {
+  background: white;
+  color: var(--text);
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+}
+
+.google-auth-btn:hover {
+  background: #f8fafc;
+}
+
+.auth-note {
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
 }
 
 .auth-message {
@@ -509,6 +529,13 @@ button, input, textarea {
   display: grid;
   grid-template-columns: 1.4fr 0.7fr;
   gap: 1.5rem;
+}
+
+.seller-shell {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
 }
 
 .cart-list {
@@ -571,6 +598,46 @@ button, input, textarea {
   color: white;
 }
 
+.category-bar span,
+.store-nav span {
+  cursor: pointer;
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.35rem;
+}
+
+.category-bar span.active,
+.store-nav span.active {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--amazon-yellow-2);
+  font-weight: 700;
+}
+
+.add-cart-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+  font-weight: 700;
+  background: linear-gradient(180deg, var(--amazon-yellow-2), var(--amazon-yellow));
+  color: var(--amazon-blue);
+  cursor: pointer;
+}
+
+.add-cart-btn:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.order-status-pill {
+  display: inline-block;
+  background: #eaf7f0;
+  color: var(--success);
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 @media (max-width: 980px) {
   .top-strip,
   .store-topbar,
@@ -591,6 +658,7 @@ button, input, textarea {
 @media (max-width: 760px) {
   .hero-banner,
   .checkout-shell,
+  .seller-shell,
   .auth-shell,
   .product-grid,
   .promo-grid,
